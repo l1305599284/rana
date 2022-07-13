@@ -1,0 +1,46 @@
+{
+  "name": "rana",
+  "version": "0.0.0",
+  "files": [
+    "dist"
+  ],
+  "keywords": [
+    "webgpu",
+    "render",
+    "3d"
+  ],
+  "main": "./dist/index.umd.js",
+  "module": "./dist/index.es.js",
+  "types": "./dist/index.d.ts",
+  "unpkg": "./dist/index.umd.js",
+  "exports": {
+    ".": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./dist/*": {
+      "import": "./dist/index.es.js",
+      "require": "./dist/index.umd.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/node": "^18.0.3",
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@vitejs/plugin-react": "^1.3.0",
+    "@webgpu/types": "^0.1.21",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "tslib": "^2.4.0",
+    "typescript": "^4.6.3",
+    "vite": "^2.9.9",
+    "vite-plugin-dts": "^1.3.0"
+  }
+}
