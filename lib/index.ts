@@ -1,4 +1,4 @@
-import vertexShaderCode from "./shaders/vertex.wgsl?raw";
+import vertexShaderCode from "./shaders/test.vert.wgsl?raw";
 import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
 import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
 export const render = async () => {
@@ -49,16 +49,128 @@ export const render = async () => {
       }
     }
   }
-  // Upload vertex data
-  // ....
+  // Specify vertex data
+  // Allocate room for the vertex data: 3 vertices, each with 2 float4's
+
+  const dataBuf = device.createBuffer({
+    size: 3 * 2 * 4 * 4,
+    usage: GPUBufferUsage.VERTEX,
+    mappedAtCreation: true,
+  });
+
+  // Interleaved positions and colors
+  new Float32Array(dataBuf.getMappedRange()).set([
+    1,
+    -1,
+    0,
+    1, // position
+    1,
+    0,
+    0,
+    1, // color
+    -1,
+    -1,
+    0,
+    1, // position
+    0,
+    1,
+    0,
+    1, // color
+    0,
+    1,
+    0,
+    1, // position
+    0,
+    0,
+    1,
+    1, // color
+  ]);
+  dataBuf.unmap();
+
+  // Vertex attribute state and shader stage
+  const vertexState = {
+    // Shader stage info
+    module: shaderModule,
+    entryPoint: "vertex_main",
+    // Vertex buffer info
+    buffers: [
+      {
+        arrayStride: 2 * 4 * 4,
+        attributes: [
+          { format: "float32x4", offset: 0, shaderLocation: 0 },
+          { format: "float32x4", offset: 4 * 4, shaderLocation: 1 },
+        ],
+      },
+    ],
+  };
 
   // Setup render outputs
-  // ....
+  const swapChainFormat = "bgra8unorm";
+  context.configure({
+    device: device,
+    format: swapChainFormat,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+  const depthFormat = "depth24plus-stencil8";
+  const depthTexture = device.createTexture({
+    size: {
+      width: canvas.width,
+      height: canvas.height,
+      depth: 1,
+    } as any,
+    format: depthFormat,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+  const fragmentState = {
+    // Shader info
+    module: shaderModule,
+    entryPoint: "fragment_main",
+    // Output render target info
+    targets: [{ format: swapChainFormat }],
+  };
 
   // Create render pipeline
-  // ....
+  const layout = device.createPipelineLayout({ bindGroupLayouts: [] });
 
+  const renderPipeline = device.createRenderPipeline({
+    layout: layout,
+    vertex: vertexState,
+    fragment: fragmentState,
+    depthStencil: {
+      format: depthFormat,
+      depthWriteEnabled: true,
+      depthCompare: "less",
+    },
+  } as any);
+  const renderPassDesc = {
+    colorAttachments: [{ view: undefined, loadValue: [0.3, 0.3, 0.3, 1] }],
+    depthStencilAttachment: {
+      view: depthTexture.createView(),
+      depthLoadValue: 1.0,
+      depthStoreOp: "store",
+      stencilLoadValue: 0,
+      stencilStoreOp: "store",
+    },
+  };
   // Render!
+  const frame = function () {
+    renderPassDesc.colorAttachments[0].view = context
+      .getCurrentTexture()
+      .createView();
+
+    var commandEncoder = device.createCommandEncoder();
+
+    var renderPass = commandEncoder.beginRenderPass(renderPassDesc as any);
+
+    renderPass.setPipeline(renderPipeline);
+    renderPass.setVertexBuffer(0, dataBuf);
+    renderPass.draw(3, 1, 0, 0);
+
+    renderPass.end();
+    device.queue.submit([commandEncoder.finish()]);
+    requestAnimationFrame(frame);
+  };
+  requestAnimationFrame(frame);
   // ....
 };
 // 📈 Position Vertex Buffer Data

@@ -2,6 +2,8 @@ import React, { useEffect } from "react";
 import { render, Renderer } from "../lib";
 
 function App() {
+  console.log(12421);
+
   useEffect(() => {
     render();
     // const canvas = document.getElementById(
