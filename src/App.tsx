@@ -2,8 +2,6 @@ import React, { useEffect } from "react";
 import { render, Renderer } from "../lib";
 
 function App() {
-  console.log(12421);
-
   useEffect(() => {
     render();
     // const canvas = document.getElementById(
@@ -22,7 +20,7 @@ function App() {
         padding: "1em",
       }}
     >
-      <canvas id="webgpu-canvas" width="640" height="640"></canvas>
+      <canvas id="webgpu-canvas" width="128" height="96"></canvas>
     </div>
   );
 }

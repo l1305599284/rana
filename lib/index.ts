@@ -1,20 +1,26 @@
 import vertexShaderCode from "./shaders/test.vert.wgsl?raw";
 import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
 import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
-export const render = async () => {
+const initWebGPU = async () => {
   if (!("gpu" in navigator)) {
     console.error(
       "WebGPU is not supported. Enable chrome://flags/#enable-unsafe-webgpu flag."
     );
     return;
   }
-  const adapter = await navigator.gpu.requestAdapter();
+  const entry: GPU = navigator.gpu;
+  const adapter = await entry.requestAdapter({
+    powerPreference: "high-performance",
+  });
   if (!adapter) {
     console.error("Failed to get GPU adapter.");
     return;
   }
 
-  const device = await adapter.requestDevice();
+  const device = await adapter.requestDevice({
+    requiredFeatures: [],
+    requiredLimits: {},
+  });
   if (!device) {
     console.error("Failed to get GPU device.");
     return;
@@ -29,8 +35,35 @@ export const render = async () => {
   if (!context) {
     console.error("webgpu is not supported.");
   }
-
-  // Setup shader modules
+  const format = entry.getPreferredCanvasFormat();
+  context.configure({
+    device,
+    format,
+    alphaMode: "opaque",
+  });
+  return { entry, canvas, adapter, device, context, format };
+};
+const initDepthStencil = async (
+  device: GPUDevice,
+  canvas: HTMLCanvasElement
+) => {
+  const depthFormat = <GPUTextureFormat>"depth24plus-stencil8";
+  const depthTexture = device.createTexture({
+    size: {
+      width: canvas.width,
+      height: canvas.height,
+      depthOrArrayLayers: 1,
+    },
+    format: depthFormat,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
+  });
+  return { depthFormat, depthTexture };
+};
+const initPipline = async (
+  device: GPUDevice,
+  depthFormat: GPUTextureFormat,
+  format: GPUTextureFormat
+) => {
   const shaderModule = device.createShaderModule({ code: vertexShaderCode });
   // This API is only available in Chrome right now
   if (shaderModule.compilationInfo) {
@@ -49,8 +82,53 @@ export const render = async () => {
       }
     }
   }
-  // Specify vertex data
-  // Allocate room for the vertex data: 3 vertices, each with 2 float4's
+
+  // Vertex attribute state and shader stage
+  const vertexState = <any>{
+    // Shader stage info
+    module: shaderModule,
+    entryPoint: "vertexMain",
+    // Vertex buffer info
+    buffers: [
+      {
+        arrayStride: 2 * 4 * 4,
+        attributes: [
+          { format: "float32x4", offset: 0, shaderLocation: 0 },
+          { format: "float32x4", offset: 4 * 4, shaderLocation: 1 },
+        ],
+      },
+    ],
+  };
+  const fragmentState = {
+    // Shader info
+    module: shaderModule,
+    entryPoint: "fragmentMain",
+    // Output render target info
+    targets: [{ format }],
+  };
+  // Create render pipeline
+  const layout = device.createPipelineLayout({ bindGroupLayouts: [] });
+
+  const pipeline = await device.createRenderPipelineAsync({
+    layout: layout,
+    vertex: vertexState,
+    fragment: fragmentState,
+    depthStencil: {
+      format: depthFormat,
+      depthWriteEnabled: true,
+      depthCompare: "less",
+    },
+    primitive: {
+      topology: "triangle-list",
+    },
+  });
+  return { pipeline };
+};
+export const render = async () => {
+  const { canvas, device, context, format } = await initWebGPU();
+  // Setup shader modules
+  const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
+  const { pipeline } = await initPipline(device, depthFormat, format);
 
   const dataBuf = device.createBuffer({
     size: 3 * 2 * 4 * 4,
@@ -85,86 +163,38 @@ export const render = async () => {
     1,
     1, // color
   ]);
+
   dataBuf.unmap();
 
-  // Vertex attribute state and shader stage
-  const vertexState = {
-    // Shader stage info
-    module: shaderModule,
-    entryPoint: "vertex_main",
-    // Vertex buffer info
-    buffers: [
-      {
-        arrayStride: 2 * 4 * 4,
-        attributes: [
-          { format: "float32x4", offset: 0, shaderLocation: 0 },
-          { format: "float32x4", offset: 4 * 4, shaderLocation: 1 },
-        ],
-      },
-    ],
-  };
-
   // Setup render outputs
-  const swapChainFormat = "bgra8unorm";
-  context.configure({
-    device: device,
-    format: swapChainFormat,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
-  });
-  const depthFormat = "depth24plus-stencil8";
-  const depthTexture = device.createTexture({
-    size: {
-      width: canvas.width,
-      height: canvas.height,
-      depth: 1,
-    } as any,
-    format: depthFormat,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
-  });
-  const fragmentState = {
-    // Shader info
-    module: shaderModule,
-    entryPoint: "fragment_main",
-    // Output render target info
-    targets: [{ format: swapChainFormat }],
-  };
 
-  // Create render pipeline
-  const layout = device.createPipelineLayout({ bindGroupLayouts: [] });
-
-  const renderPipeline = device.createRenderPipeline({
-    layout: layout,
-    vertex: vertexState,
-    fragment: fragmentState,
-    depthStencil: {
-      format: depthFormat,
-      depthWriteEnabled: true,
-      depthCompare: "less",
-    },
-  } as any);
-  const renderPassDesc = {
-    colorAttachments: [{ view: undefined, loadValue: [0.3, 0.3, 0.3, 1] }],
-    depthStencilAttachment: {
-      view: depthTexture.createView(),
-      depthLoadValue: 1.0,
-      depthStoreOp: "store",
-      stencilLoadValue: 0,
-      stencilStoreOp: "store",
-    },
-  };
   // Render!
   const frame = function () {
-    renderPassDesc.colorAttachments[0].view = context
-      .getCurrentTexture()
-      .createView();
+    const commandEncoder = device.createCommandEncoder();
 
-    var commandEncoder = device.createCommandEncoder();
+    const renderPass = commandEncoder.beginRenderPass({
+      colorAttachments: [
+        {
+          view: context.getCurrentTexture().createView(),
+          clearValue: { r: 1, g: 1, b: 1, a: 1 },
+          loadOp: "clear",
+          storeOp: "store",
+        },
+      ],
+      depthStencilAttachment: {
+        view: depthTexture.createView(),
+        depthClearValue: 1,
+        depthLoadOp: "clear",
+        depthStoreOp: "store",
+        stencilClearValue: 0,
+        stencilLoadOp: "clear",
+        stencilStoreOp: "store",
+      },
+    });
 
-    var renderPass = commandEncoder.beginRenderPass(renderPassDesc as any);
-
-    renderPass.setPipeline(renderPipeline);
+    renderPass.setPipeline(pipeline);
     renderPass.setVertexBuffer(0, dataBuf);
-    renderPass.draw(3, 1, 0, 0);
+    renderPass.draw(3, 1);
 
     renderPass.end();
     device.queue.submit([commandEncoder.finish()]);
@@ -238,10 +268,15 @@ export class Renderer {
       }
 
       // 🔌 Physical Device Adapter
-      this.adapter = await entry.requestAdapter();
+      this.adapter = await entry.requestAdapter({
+        powerPreference: "high-performance",
+      });
 
       // 💻 Logical Device
-      this.device = await this.adapter.requestDevice();
+      this.device = await this.adapter.requestDevice({
+        requiredFeatures: [],
+        requiredLimits: {},
+      });
 
       // 📦 Queue
       this.queue = this.device.queue;
@@ -350,13 +385,12 @@ export class Renderer {
 
     const pipelineDesc: GPURenderPipelineDescriptor = {
       layout,
-
       vertex,
       fragment,
-
       primitive,
       depthStencil,
     };
+
     this.pipeline = this.device.createRenderPipeline(pipelineDesc);
   }
 
