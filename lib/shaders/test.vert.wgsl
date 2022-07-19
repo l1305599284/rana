@@ -10,11 +10,13 @@ struct VertexOutput {
     @location(0) color: float4,
 };
 
+@group(0) @bindng(1) var<uniform> mvp: mat4x4<f32> 
+
 @vertex
 fn vertexMain(vert: VertexInput) -> VertexOutput {
     var out: VertexOutput;
     out.color = vert.color;
-    out.position = vert.position;
+    out.position = mvp * vert.position;
     return out;
 };
 

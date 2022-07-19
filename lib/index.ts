@@ -1,11 +1,14 @@
 import vertexShaderCode from "./shaders/test.vert.wgsl?raw";
 import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
 import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
+import { createVertexBuffer,createUniformBuffer } from "./buffer";
+import { f32 } from "./vertex";
 const initWebGPU = async () => {
   if (!("gpu" in navigator)) {
     console.error(
       "WebGPU is not supported. Enable chrome://flags/#enable-unsafe-webgpu flag."
-    );
+    );  
+    
     return;
   }
   const entry: GPU = navigator.gpu;
@@ -61,10 +64,13 @@ const initDepthStencil = async (
 };
 const initPipline = async (
   device: GPUDevice,
-  depthFormat: GPUTextureFormat,
-  format: GPUTextureFormat
+  format: GPUTextureFormat,
+  depthOp?:{
+    depthFormat: GPUTextureFormat,
+  }
 ) => {
   const shaderModule = device.createShaderModule({ code: vertexShaderCode });
+
   // This API is only available in Chrome right now
   if (shaderModule.compilationInfo) {
     const compilationInfo = await shaderModule.compilationInfo();
@@ -99,6 +105,7 @@ const initPipline = async (
       },
     ],
   };
+
   const fragmentState = {
     // Shader info
     module: shaderModule,
@@ -106,6 +113,7 @@ const initPipline = async (
     // Output render target info
     targets: [{ format }],
   };
+
   // Create render pipeline
   const layout = device.createPipelineLayout({ bindGroupLayouts: [] });
 
@@ -113,12 +121,13 @@ const initPipline = async (
     layout: layout,
     vertex: vertexState,
     fragment: fragmentState,
-    depthStencil: {
-      format: depthFormat,
+    depthStencil: depthOp && {
+      format: depthOp.depthFormat,
       depthWriteEnabled: true,
       depthCompare: "less",
     },
     primitive: {
+      cullMode:'back',
       topology: "triangle-list",
     },
   });
@@ -128,17 +137,10 @@ export const render = async () => {
   const { canvas, device, context, format } = await initWebGPU();
   // Setup shader modules
   const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
-  const { pipeline } = await initPipline(device, depthFormat, format);
+  const { pipeline } = await initPipline(device, format,{depthFormat});
 
-  const dataBuf = device.createBuffer({
-    size: 3 * 2 * 4 * 4,
-    usage: GPUBufferUsage.VERTEX,
-    mappedAtCreation: true,
-  });
-
-  // Interleaved positions and colors
-  new Float32Array(dataBuf.getMappedRange()).set([
-    1,
+  const data = [
+  1,
     -1,
     0,
     1, // position
@@ -162,9 +164,25 @@ export const render = async () => {
     0,
     1,
     1, // color
-  ]);
+  ];
+  const dataBuf = createVertexBuffer(
+    data,
+    device,
+  );
 
-  dataBuf.unmap();
+  const mat = []
+ const mvp = createUniformBuffer(mat,device)
+  
+ const uniformGroup = device.createBindGroup({
+  label:'uniform group for mat',
+  layout:pipeline.getBindGroupLayout(0),
+  entries:[{
+    binding:0,
+    resource:{
+      buffer:mvp
+    }
+  }]
+ })
 
   // Setup render outputs
 
