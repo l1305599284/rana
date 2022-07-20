@@ -5,6 +5,8 @@ struct VertexInput {
     @location(1) color: float4,
 };
 
+
+
 struct VertexOutput {
     @builtin(position) position: float4,
     @location(0) color: float4,
