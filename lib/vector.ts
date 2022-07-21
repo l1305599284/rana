@@ -1,14 +1,16 @@
 import { DType } from "./matrix";
 
-class Vector {
+export class Vector {
   data: Float32Array;
   dtype: DType = "f32";
   byteLength: number;
-  constructor(x: number, y: number, z?: number, w?: number) {
-    if (w) this.data = new Float32Array([x, y, z, w]);
-    else if (z) this.data = new Float32Array([x, y, z]);
-    else this.data = new Float32Array([x, y]);
+  constructor(x: number, y: number, z: number = 0, w: number = 1) {
+    this.data = new Float32Array([x, y, z, w]);
+
     this.byteLength = this.data.byteLength;
+  }
+  set(data: number[]) {
+    this.data = new Float32Array(data);
   }
 }
 

@@ -12,16 +12,21 @@ function App() {
     // renderer.start();
   }, []);
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: "1em",
-      }}
-    >
-      <canvas id="webgpu-canvas" width="128" height="96"></canvas>
-    </div>
+    <>
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          padding: "1em",
+        }}
+      >
+        <canvas id="webgpu-canvas" width="128" height="128"></canvas>
+      </div>
+      <div>
+        <input type="range" min="0" max="1" step="0.02" id="tx" />
+      </div>
+    </>
   );
 }
 

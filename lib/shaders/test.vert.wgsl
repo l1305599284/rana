@@ -14,9 +14,10 @@ struct VertexOutput {
 
 @vertex
 fn vertexMain(vert: VertexInput) -> VertexOutput {
+
     var out: VertexOutput;
-    out.color = vert.color;
-    out.position = vert.position;
+    out.color =  vert.color;
+    out.position = transpose(mvp) *  vert.position;
     return out;
 };
 

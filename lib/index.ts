@@ -4,7 +4,15 @@ import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
 import { createVertexBuffer, createUniformBuffer } from "./buffer";
 import { f32 } from "./vertex";
 import { i, mat } from "./matrix";
+import { rx, ry, rz, tl } from "./transform";
+import { vec4 } from "./vector";
+// let x = 0;
+// const tx = document.getElementById("tx");
+// console.log(tx);
 
+// tx.addEventListener("input", (v) => {
+//   x = (v.target as any).value * 1;
+// });
 const initWebGPU = async () => {
   if (!("gpu" in navigator)) {
     console.error(
@@ -113,8 +121,13 @@ const initPipline = async (
     entryPoint: "fragmentMain",
     targets: [{ format }],
   };
-  const m = mat([]);
-  const mvp = createUniformBuffer(i().data, device);
+  const m = tl(0.5);
+  const p = vec4(0.5, -0.5, 0, 1);
+  m.aplly(p);
+  console.log("m", m.data);
+  console.log("p", p.data);
+
+  const mvp = createUniformBuffer(m.data, device);
   const bindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
@@ -136,7 +149,7 @@ const initPipline = async (
       },
     ],
   });
-  // device.queue.writeBuffer(mvp, 0, i().data);
+  // device.queue.writeBuffer(mvp, 0, m.d);
   // Create render pipeline
   const layout = device.createPipelineLayout({
     bindGroupLayouts: [bindGroupLayout],
@@ -152,8 +165,8 @@ const initPipline = async (
       depthCompare: "less",
     },
     primitive: {
-      cullMode: "front",
-      topology: "triangle-list",
+      frontFace: "cw",
+      cullMode: "back",
     },
   });
   return { pipeline, uniformGroup };
@@ -167,24 +180,24 @@ export const render = async () => {
   });
 
   const vert = mat([
-    1,
-    -1,
+    0.5,
+    -0.5,
     0,
     1, // position
     1,
     0,
     0,
     1, // color
-    -1,
-    -1,
+    -0.5,
+    -0.5,
     0,
     1, // position
     0,
-    1,
+    0.5,
     0,
     1, // color
     0,
-    1,
+    0.5,
     0,
     1, // position
     0,
@@ -192,6 +205,7 @@ export const render = async () => {
     1,
     1, // color
   ]);
+
   const dataBuf = createVertexBuffer(vert.data, device);
 
   // Setup render outputs
