@@ -28,11 +28,12 @@ class Matrix {
     this.data[14] = temp[11];
     this.data[15] = temp[15];
   }
-  static I() {
-    return new Matrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
-  }
 }
 
 export function mat(data: number[] | number[][], dType?: DType) {
   return new Matrix(data, dType);
+}
+
+export function i() {
+  return new Matrix([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 }

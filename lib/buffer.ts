@@ -1,10 +1,10 @@
 export const createBuffer = (
-  arr: number[],
+  arr: Float32Array,
   usage: GPUBufferUsageFlags,
   device: GPUDevice
 ) => {
   const desc = {
-    size: (arr.length * 4 + 3) & ~3,
+    size: (arr.byteLength * 4 + 3) & ~3,
     usage,
     mappedAtCreation: true,
   };
@@ -15,14 +15,14 @@ export const createBuffer = (
   return buffer;
 };
 
-export const createUniformBuffer = (arr: number[], device: GPUDevice) => {
+export const createUniformBuffer = (arr: Float32Array, device: GPUDevice) => {
   return createBuffer(
     arr,
     GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     device
   );
 };
-export const createVertexBuffer = (arr: number[], device: GPUDevice) => {
+export const createVertexBuffer = (arr: Float32Array, device: GPUDevice) => {
   return createBuffer(
     arr,
     GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,

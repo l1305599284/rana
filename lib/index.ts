@@ -1,14 +1,16 @@
 import vertexShaderCode from "./shaders/test.vert.wgsl?raw";
 import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
 import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
-import { createVertexBuffer,createUniformBuffer } from "./buffer";
+import { createVertexBuffer, createUniformBuffer } from "./buffer";
 import { f32 } from "./vertex";
+import { i, mat } from "./matrix";
+
 const initWebGPU = async () => {
   if (!("gpu" in navigator)) {
     console.error(
       "WebGPU is not supported. Enable chrome://flags/#enable-unsafe-webgpu flag."
-    );  
-    
+    );
+
     return;
   }
   const entry: GPU = navigator.gpu;
@@ -46,6 +48,7 @@ const initWebGPU = async () => {
   });
   return { entry, canvas, adapter, device, context, format };
 };
+
 const initDepthStencil = async (
   device: GPUDevice,
   canvas: HTMLCanvasElement
@@ -62,11 +65,12 @@ const initDepthStencil = async (
   });
   return { depthFormat, depthTexture };
 };
+
 const initPipline = async (
   device: GPUDevice,
   format: GPUTextureFormat,
-  depthOp?:{
-    depthFormat: GPUTextureFormat,
+  depthOp?: {
+    depthFormat: GPUTextureFormat;
   }
 ) => {
   const shaderModule = device.createShaderModule({ code: vertexShaderCode });
@@ -91,10 +95,8 @@ const initPipline = async (
 
   // Vertex attribute state and shader stage
   const vertexState = <any>{
-    // Shader stage info
     module: shaderModule,
     entryPoint: "vertexMain",
-    // Vertex buffer info
     buffers: [
       {
         arrayStride: 2 * 4 * 4,
@@ -107,15 +109,38 @@ const initPipline = async (
   };
 
   const fragmentState = {
-    // Shader info
     module: shaderModule,
     entryPoint: "fragmentMain",
-    // Output render target info
     targets: [{ format }],
   };
-
+  const m = mat([]);
+  const mvp = createUniformBuffer(i().data, device);
+  const bindGroupLayout = device.createBindGroupLayout({
+    entries: [
+      {
+        binding: 0,
+        visibility: GPUShaderStage.VERTEX,
+        buffer: { type: "uniform" },
+      },
+    ],
+  });
+  const uniformGroup = device.createBindGroup({
+    label: "uniform group for mat",
+    layout: bindGroupLayout,
+    entries: [
+      {
+        binding: 0,
+        resource: {
+          buffer: mvp,
+        },
+      },
+    ],
+  });
+  // device.queue.writeBuffer(mvp, 0, i().data);
   // Create render pipeline
-  const layout = device.createPipelineLayout({ bindGroupLayouts: [] });
+  const layout = device.createPipelineLayout({
+    bindGroupLayouts: [bindGroupLayout],
+  });
 
   const pipeline = await device.createRenderPipelineAsync({
     layout: layout,
@@ -127,20 +152,22 @@ const initPipline = async (
       depthCompare: "less",
     },
     primitive: {
-      cullMode:'back',
+      cullMode: "front",
       topology: "triangle-list",
     },
   });
-  return { pipeline };
+  return { pipeline, uniformGroup };
 };
 export const render = async () => {
   const { canvas, device, context, format } = await initWebGPU();
   // Setup shader modules
   const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
-  const { pipeline } = await initPipline(device, format,{depthFormat});
+  const { pipeline, uniformGroup } = await initPipline(device, format, {
+    depthFormat,
+  });
 
-  const data = [
-  1,
+  const vert = mat([
+    1,
     -1,
     0,
     1, // position
@@ -164,25 +191,8 @@ export const render = async () => {
     0,
     1,
     1, // color
-  ];
-  const dataBuf = createVertexBuffer(
-    data,
-    device,
-  );
-
-  const mat = []
- const mvp = createUniformBuffer(mat,device)
-  
- const uniformGroup = device.createBindGroup({
-  label:'uniform group for mat',
-  layout:pipeline.getBindGroupLayout(0),
-  entries:[{
-    binding:0,
-    resource:{
-      buffer:mvp
-    }
-  }]
- })
+  ]);
+  const dataBuf = createVertexBuffer(vert.data, device);
 
   // Setup render outputs
 
@@ -194,7 +204,7 @@ export const render = async () => {
       colorAttachments: [
         {
           view: context.getCurrentTexture().createView(),
-          clearValue: { r: 1, g: 1, b: 1, a: 1 },
+          clearValue: { r: 0, g: 0, b: 0, a: 1 },
           loadOp: "clear",
           storeOp: "store",
         },
@@ -211,6 +221,7 @@ export const render = async () => {
     });
 
     renderPass.setPipeline(pipeline);
+    renderPass.setBindGroup(0, uniformGroup);
     renderPass.setVertexBuffer(0, dataBuf);
     renderPass.draw(3, 1);
 
@@ -221,6 +232,7 @@ export const render = async () => {
   requestAnimationFrame(frame);
   // ....
 };
+
 // 📈 Position Vertex Buffer Data
 const positions = new Float32Array([
   1.0, -1.0, 0.0, -1.0, -1.0, 0.0, 0.0, 1.0, 0.0,
@@ -397,7 +409,7 @@ export class Renderer {
     // 🟨 Rasterization
     const primitive: GPUPrimitiveState = {
       frontFace: "cw",
-      cullMode: "none",
+      cullMode: "back",
       topology: "triangle-list",
     };
 
