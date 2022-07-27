@@ -10,7 +10,10 @@ export class Matrix {
     this.byteLength = this.data.byteLength;
     this.size = this.data.length;
   }
-
+  deta() {
+    // return this.data[0] * this.data[0];
+  }
+  inverses() {}
   mul(target: Matrix) {
     const v1 =
       this.data[0] * target.data[0] +

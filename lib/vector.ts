@@ -1,4 +1,4 @@
-import { DType } from "./matrix";
+import { DType, mat } from "./matrix";
 
 export class Vector {
   data: Float32Array;
@@ -17,6 +17,13 @@ export class Vector {
   }
   set(data: number[]) {
     if (this.dtype == "f32") this.data = new Float32Array(data);
+  }
+  equils(v: Vector) {
+    let e = false;
+    if (v.byteLength == this.byteLength) {
+      if (this.data.toString() == v.data.toString()) e = true;
+    }
+    return e;
   }
   mul(v: Vector) {
     this.data[0] *= v.data[0];
@@ -64,8 +71,19 @@ export class Vector {
       this.data[2] * v.data[2]
     );
   }
+  cross(v: Vector) {
+    return vec4(
+      this.data[1] * v.data[2] - this.data[2] * v.data[1],
+      this.data[2] * v.data[0] - this.data[0] * v.data[2],
+      this.data[0] * v.data[1] - this.data[1] * v.data[0],
+      1
+    );
+  }
   cos(v: Vector) {
     return (this.dot(v) / this.norm()) * v.norm();
+  }
+  orthogonal(v: Vector) {
+    return this.dot(v) == 0;
   }
 }
 
