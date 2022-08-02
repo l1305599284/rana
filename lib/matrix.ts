@@ -10,9 +10,6 @@ export class Matrix {
     this.byteLength = this.data.byteLength;
     this.size = this.data.length;
   }
-  deta() {
-    // return this.data[0] * this.data[0];
-  }
   inverses() {}
   mul(target: Matrix) {
     const v1 =
@@ -114,7 +111,7 @@ export class Matrix {
       v15,
       v16,
     ];
-    return mat(result);
+    return mat4(result);
   }
   aplly(target: Vector) {
     const v1 =
@@ -140,28 +137,30 @@ export class Matrix {
     const result = [v1, v2, v3, v4];
     target.set(result);
   }
-  T() {
-    const temp = this.data;
-    this.data[0] = temp[0];
-    this.data[1] = temp[4];
-    this.data[2] = temp[8];
-    this.data[3] = temp[12];
-    this.data[4] = temp[1];
-    this.data[5] = temp[5];
-    this.data[6] = temp[9];
-    this.data[7] = temp[13];
-    this.data[8] = temp[2];
-    this.data[9] = temp[6];
-    this.data[10] = temp[10];
-    this.data[11] = temp[14];
-    this.data[12] = temp[3];
-    this.data[13] = temp[7];
-    this.data[14] = temp[11];
-    this.data[15] = temp[15];
+  transpose() {
+    let nd = new Float32Array(16);
+    nd[0] = this.data[0];
+    nd[1] = this.data[4];
+    nd[2] = this.data[8];
+    nd[3] = this.data[12];
+    nd[4] = this.data[1];
+    nd[5] = this.data[5];
+    nd[6] = this.data[9];
+    nd[7] = this.data[13];
+    nd[8] = this.data[2];
+    nd[9] = this.data[6];
+    nd[10] = this.data[10];
+    nd[11] = this.data[14];
+    nd[12] = this.data[3];
+    nd[13] = this.data[7];
+    nd[14] = this.data[11];
+    nd[15] = this.data[15];
+    this.data = nd;
+    nd = null;
   }
 }
 
-export function mat(data: number[] | number[][], dType?: DType) {
+export function mat4(data: number[] | number[][], dType?: DType) {
   return new Matrix(data, dType);
 }
 

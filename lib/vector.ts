@@ -1,4 +1,4 @@
-import { DType, mat } from "./matrix";
+import { DType, mat4 } from "./matrix";
 
 export class Vector {
   data: Float32Array;

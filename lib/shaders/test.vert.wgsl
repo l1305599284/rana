@@ -1,13 +1,13 @@
-type float4 = vec4<f32>;
+type v4 = vec4<f32>;
 
 struct VertexInput {
-    @location(0) position: float4,
-    @location(1) color: float4,
+    @location(0) position: v4,
+    @location(1) color: v4,
 };
 
 struct VertexOutput {
-    @builtin(position) position: float4,
-    @location(0) color: float4,
+    @builtin(position) position:  v4,
+    @location(0) color: v4,
 };
 
 @group(0) @binding(0) var<uniform> mvp: mat4x4<f32>; 
@@ -17,11 +17,11 @@ fn vertexMain(vert: VertexInput) -> VertexOutput {
 
     var out: VertexOutput;
     out.color =  vert.color;
-    out.position = transpose(mvp) *  vert.position;
+    out.position = mvp * vert.position;
     return out;
 };
 
 @fragment
-fn fragmentMain(in: VertexOutput) -> @location(0) float4 {
-    return float4(in.color);
+fn fragmentMain(in: VertexOutput) -> @location(0) v4 {
+    return v4(in.color);
 }

@@ -3,7 +3,7 @@ import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
 import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
 import { createVertexBuffer, createUniformBuffer } from "./buffer";
 import { f32 } from "./vertex";
-import { i, mat } from "./matrix";
+import { i, mat4 } from "./matrix";
 import { rx, ry, rz, tl } from "./transform";
 import { vec4 } from "./vector";
 // let x = 0;
@@ -121,11 +121,12 @@ const initPipline = async (
     entryPoint: "fragmentMain",
     targets: [{ format }],
   };
-  const m = tl(0.5);
-  const p = vec4(0.5, -0.5, 0, 1);
-  m.aplly(p);
-  console.log("m", m.data);
-  console.log("p", p.data);
+  const m1 = tl(0.5);
+  const m = tl(0.5).mul(rz(15));
+
+  m.transpose();
+
+  console.log(m.data);
 
   const mvp = createUniformBuffer(m.data, device);
   const bindGroupLayout = device.createBindGroupLayout({
@@ -138,7 +139,7 @@ const initPipline = async (
     ],
   });
   const uniformGroup = device.createBindGroup({
-    label: "uniform group for mat",
+    label: "uniform group for mat4",
     layout: bindGroupLayout,
     entries: [
       {
@@ -179,7 +180,7 @@ export const render = async () => {
     depthFormat,
   });
 
-  const vert = mat([
+  const vert = mat4([
     0.5,
     -0.5,
     0,
