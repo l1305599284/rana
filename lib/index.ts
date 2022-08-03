@@ -7,13 +7,8 @@ import { i, mat4 } from "./matrix";
 import { rx, ry, rz, tl } from "./transform";
 import { camera } from "./camera";
 import { vec4 } from "./vector";
-// let x = 0;
-// const tx = document.getElementById("tx");
-// console.log(tx);
+import { orthographic } from "./projection";
 
-// tx.addEventListener("input", (v) => {
-//   x = (v.target as any).value * 1;
-// });
 const initWebGPU = async () => {
   if (!("gpu" in navigator)) {
     console.error(
@@ -22,10 +17,12 @@ const initWebGPU = async () => {
 
     return;
   }
+
   const entry: GPU = navigator.gpu;
   const adapter = await entry.requestAdapter({
     powerPreference: "high-performance",
   });
+
   if (!adapter) {
     console.error("Failed to get GPU adapter.");
     return;
@@ -42,10 +39,13 @@ const initWebGPU = async () => {
 
   // Get a context to display our rendered image on the canvas
   const canvas = <HTMLCanvasElement>document.getElementById("webgpu-canvas");
+
   if (!canvas) {
     console.error("canvas is not exist.");
   }
+
   const context = canvas.getContext("webgpu");
+
   if (!context) {
     console.error("webgpu is not supported.");
   }
@@ -123,18 +123,15 @@ const initPipline = async (
     targets: [{ format }],
   };
 
-  const c = camera(vec4(0.5, 0, 0), vec4(0, 0, 1), vec4(0, 1, 0));
-
-  const m1 = tl(0.5);
-  // const m = tl(0.5).mul(rz(15));
-  const m = c.mat().mul(m1);
-  console.log("1", m.data);
-
-  m.transpose();
+  const v = camera(vec4(0, 0, 0), vec4(0, 0, 1), vec4(0, 1, 0)).mat();
+  const p = orthographic(-4, 4, -4, 4, 0, 4);
+  const m = tl(0);
+  const mvp = p.mul(m).mul(v);
+  mvp.transpose();
 
   console.log(m.data);
 
-  const mvp = createUniformBuffer(m.data, device);
+  const mvpBuffer = createUniformBuffer(mvp.data, device);
   const bindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
@@ -151,7 +148,7 @@ const initPipline = async (
       {
         binding: 0,
         resource: {
-          buffer: mvp,
+          buffer: mvpBuffer,
         },
       },
     ],
@@ -187,16 +184,16 @@ export const render = async () => {
   });
 
   const vert = mat4([
-    0.5,
-    -0.5,
+    1,
+    -1,
     0,
     1, // position
     1,
     0,
     0,
     1, // color
-    -0.5,
-    -0.5,
+    -1,
+    -1,
     0,
     1, // position
     0,
@@ -204,7 +201,7 @@ export const render = async () => {
     0,
     1, // color
     0,
-    0.5,
+    1,
     0,
     1, // position
     0,
