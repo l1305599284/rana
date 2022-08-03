@@ -74,7 +74,7 @@ export class Vector {
   cross(v: Vector) {
     return vec4(
       this.data[1] * v.data[2] - this.data[2] * v.data[1],
-      this.data[2] * v.data[0] - this.data[0] * v.data[2],
+      this.data[0] * v.data[2] - this.data[2] * v.data[0],
       this.data[0] * v.data[1] - this.data[1] * v.data[0],
       1
     );
@@ -97,7 +97,7 @@ export function vec4(
   x: number,
   y: number,
   z: number,
-  w: number,
+  w: number = 1,
   dtype: DType = "f32"
 ) {
   return new Vector(x, y, z, w, dtype);

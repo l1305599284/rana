@@ -5,6 +5,7 @@ import { createVertexBuffer, createUniformBuffer } from "./buffer";
 import { f32 } from "./vertex";
 import { i, mat4 } from "./matrix";
 import { rx, ry, rz, tl } from "./transform";
+import { camera } from "./camera";
 import { vec4 } from "./vector";
 // let x = 0;
 // const tx = document.getElementById("tx");
@@ -121,8 +122,13 @@ const initPipline = async (
     entryPoint: "fragmentMain",
     targets: [{ format }],
   };
+
+  const c = camera(vec4(0.5, 0, 0), vec4(0, 0, 1), vec4(0, 1, 0));
+
   const m1 = tl(0.5);
-  const m = tl(0.5).mul(rz(15));
+  // const m = tl(0.5).mul(rz(15));
+  const m = c.mat().mul(m1);
+  console.log("1", m.data);
 
   m.transpose();
 

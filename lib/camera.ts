@@ -9,13 +9,18 @@ class Camera {
   ) {}
 
   mat() {
+    // 相当于物体相对于相机相对于原点的运动
     const [x, y, z] = this.position.data;
     // 先平移相机到原点
     const tv = tl(-x, -y, -z);
     // 再旋转相机坐标系到原坐标系
     // 由于不好算，先算逆，即原坐标系旋转到相机坐标系
     // 又由于正交矩阵的逆等于转置
-    const gxt = this.lookAt.cross(this.up);
+
+    // 因为左手坐标系的原因，用up和lookat的叉积
+    const gxt = this.up.cross(this.lookAt);
+    console.log(gxt);
+
     return mat4([
       gxt.data[0],
       gxt.data[1],
