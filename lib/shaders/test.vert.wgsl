@@ -17,7 +17,7 @@ fn vertexMain(vert: VertexInput) -> VertexOutput {
 
     var out: VertexOutput;
     out.color =  vert.color;
-    out.position = transpose(mvp) * vert.position;
+    out.position = mvp * vert.position;
     return out;
 };
 

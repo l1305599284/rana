@@ -4,7 +4,7 @@ import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
 import { createVertexBuffer, createUniformBuffer } from "./buffer";
 import { f32 } from "./vertex";
 import { i, mat4 } from "./matrix";
-import { rx, ry, rz, tl, orthographic, view } from "./transform";
+import { rx, ry, rz, tl, orthographic, view, perspective } from "./transform";
 import { camera } from "./camera";
 import { vec4 } from "./vector";
 
@@ -122,13 +122,18 @@ const initPipline = async (
     targets: [{ format }],
   };
 
-  const v = view(vec4(0, 0, 0), vec4(0, 0, 1), vec4(1, 1, 0));
-  const p = orthographic(-4, 4, -4, 4, 0, 4);
+  const v = view(vec4(0, 0, 0), vec4(0, 0, 1), vec4(0, 1, 0));
+  console.log("vvv", v.data);
+
+  const p = perspective(1, 5);
+  // const p = orthographic(-4, 4, -4, 4, 0, 4);
   console.log("p", p.data);
 
-  const m = tl(0);
+  const m = tl(0, 0, 2);
+  console.log("m", m.data);
+
   const mvp = p.mul(v).mul(m);
-  // mvp.transpose();
+  mvp.transpose();
   console.log("mvp", mvp.data);
 
   const mvpBuffer = createUniformBuffer(mvp.data, device);

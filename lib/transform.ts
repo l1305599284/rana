@@ -71,9 +71,9 @@ export function view(position: Vector, lookAt: Vector, up: Vector) {
   // 又由于正交矩阵的逆等于转置
   // 用lookat叉乘up得到x方向
 
-  const g = lookAt.sub(position);
-  const t = up;
-  const nx = t.cross(g);
+  const ng = lookAt.sub(position).normalizing();
+  const nt = up.normalizing();
+  const nx = nt.cross(ng).normalizing();
 
   // const nx = g.cross(up);
   const rotate = mat4([
@@ -81,13 +81,13 @@ export function view(position: Vector, lookAt: Vector, up: Vector) {
     nx.data[1],
     nx.data[2],
     0,
-    t.data[0],
-    t.data[1],
-    t.data[2],
+    nt.data[0],
+    nt.data[1],
+    nt.data[2],
     0,
-    g.data[0],
-    g.data[1],
-    g.data[2],
+    ng.data[0],
+    ng.data[1],
+    ng.data[2],
     0,
     0,
     0,
@@ -112,11 +112,14 @@ export function orthographic(
 }
 
 export function perspective(
-  fov: number,
-  aspectRatio: number,
   n: number,
-  f: number
+  f: number,
+  fov: number = 150,
+  aspectRatio: number = 1
 ) {
+  if (n == 0) {
+    throw new Error("n can't equils 0!");
+  }
   const t = Math.tan(radians(fov / 2)) * n;
   const r = aspectRatio * t;
   const l = -r;
@@ -142,5 +145,6 @@ export function perspective(
   ]);
   // 再用正交投影
   const orth = orthographic(l, r, b, t, n, f);
+
   return orth.mul(frustumToOrthMat);
 }
