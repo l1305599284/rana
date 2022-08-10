@@ -1,14 +1,23 @@
 import { Vector } from "./vector";
-
-export type DType = "f32" | "f16";
+function createTypedArray(data: number[], type: DType = "f32") {
+  switch (type) {
+    case "f32":
+    default:
+      return new Float32Array(data);
+  }
+}
+export type DType = "f32" | "f16" | "u16" | "u8" | "u32";
 export class Matrix {
-  data: Float32Array;
+  private data: Float32Array;
   byteLength: number;
   size: number;
   constructor(data: number[] | number[][], public dType: DType = "f32") {
-    if ((dType = "f32")) this.data = new Float32Array(data.flat());
+    this.data = createTypedArray(data.flat(), dType);
     this.byteLength = this.data.byteLength;
     this.size = this.data.length;
+  }
+  array() {
+    return this.data;
   }
   inverses() {}
   mul(target: Matrix) {
@@ -157,6 +166,7 @@ export class Matrix {
     nd[15] = this.data[15];
     this.data = nd;
     nd = null;
+    return this;
   }
 }
 

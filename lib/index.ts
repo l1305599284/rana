@@ -2,23 +2,21 @@ import vertexShaderCode from "./shaders/test.vert.wgsl?raw";
 import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
 import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
 import { createVertexBuffer, createUniformBuffer } from "./buffer";
-import { f32 } from "./vertex";
-import { i, mat4 } from "./matrix";
-import { rx, ry, rz, tl, orthographic, view, perspective } from "./transform";
-import { camera } from "./camera";
+import { mat4 } from "./matrix";
+import { tl } from "./transform";
+import { perspectiveCamera } from "./camera";
 import { vec4 } from "./vector";
 
-const initWebGPU = async () => {
+const initWebGPU = async (canvas: HTMLCanvasElement) => {
   if (!("gpu" in navigator)) {
     console.error(
       "WebGPU is not supported. Enable chrome://flags/#enable-unsafe-webgpu flag."
     );
-
     return;
   }
+  const gpu: GPU = navigator.gpu;
 
-  const entry: GPU = navigator.gpu;
-  const adapter = await entry.requestAdapter({
+  const adapter = await gpu.requestAdapter({
     powerPreference: "high-performance",
   });
 
@@ -37,24 +35,19 @@ const initWebGPU = async () => {
   }
 
   // Get a context to display our rendered image on the canvas
-  const canvas = <HTMLCanvasElement>document.getElementById("webgpu-canvas");
-
-  if (!canvas) {
-    console.error("canvas is not exist.");
-  }
 
   const context = canvas.getContext("webgpu");
 
   if (!context) {
     console.error("webgpu is not supported.");
   }
-  const format = entry.getPreferredCanvasFormat();
+  const format = gpu.getPreferredCanvasFormat();
   context.configure({
     device,
     format,
     alphaMode: "opaque",
   });
-  return { entry, canvas, adapter, device, context, format };
+  return { gpu, canvas, adapter, device, context, format };
 };
 
 const initDepthStencil = async (
@@ -84,7 +77,7 @@ const initPipline = async (
   const shaderModule = device.createShaderModule({ code: vertexShaderCode });
 
   // This API is only available in Chrome right now
-  if (shaderModule.compilationInfo) {
+  if ("compilationInfo" in shaderModule) {
     const compilationInfo = await shaderModule.compilationInfo();
     if (compilationInfo.messages.length > 0) {
       let hadError = false;
@@ -122,21 +115,18 @@ const initPipline = async (
     targets: [{ format }],
   };
 
-  const v = view(vec4(0, 0, 0), vec4(0, 0, 1), vec4(0, 1, 0));
-  console.log("vvv", v.data);
-
-  const p = perspective(1, 5);
-  // const p = orthographic(-4, 4, -4, 4, 0, 4);
-  console.log("p", p.data);
+  const vp = perspectiveCamera(
+    vec4(0, 0, 0),
+    vec4(0, 0, 1),
+    vec4(0, 1, 0)
+  )(1, 5);
 
   const m = tl(0, 0, 2);
-  console.log("m", m.data);
 
-  const mvp = p.mul(v).mul(m);
+  const mvp = vp.mul(m);
   mvp.transpose();
-  console.log("mvp", mvp.data);
 
-  const mvpBuffer = createUniformBuffer(mvp.data, device);
+  const mvpBuffer = createUniformBuffer(mvp, device);
 
   const bindGroupLayout = device.createBindGroupLayout({
     entries: [
@@ -183,8 +173,9 @@ const initPipline = async (
 
   return { pipeline, uniformGroup };
 };
-export const render = async () => {
-  const { canvas, device, context, format } = await initWebGPU();
+
+export const render = async (canvas: HTMLCanvasElement) => {
+  const { device, context, format } = await initWebGPU(canvas);
   // Setup shader modules
   const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
   const { pipeline, uniformGroup } = await initPipline(device, format, {
@@ -218,7 +209,7 @@ export const render = async () => {
     1, // color
   ]);
 
-  const dataBuf = createVertexBuffer(vert.data, device);
+  const dataBuf = createVertexBuffer(vert, device);
 
   // Setup render outputs
 
@@ -250,8 +241,8 @@ export const render = async () => {
     renderPass.setBindGroup(0, uniformGroup);
     renderPass.setVertexBuffer(0, dataBuf);
     renderPass.draw(3, 1);
-
     renderPass.end();
+
     device.queue.submit([commandEncoder.finish()]);
     requestAnimationFrame(frame);
   };

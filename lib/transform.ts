@@ -57,11 +57,11 @@ export function reflect(x?: boolean, y?: boolean, z?: boolean) {
 /**
  * view transform
  * @param position Point
- * @param lookAt Point
+ * @param target Point
  * @param up Direction
  * @returns View Matrix Mat4x4
  */
-export function view(position: Vector, lookAt: Vector, up: Vector) {
+export function lookAt(position: Vector, target: Vector, up: Vector) {
   // 相当于物体相对于相机相对于原点的运动
   // 先平移相机到原点
   const tv = tl(-position.data[0], -position.data[1], -position.data[2]);
@@ -71,7 +71,7 @@ export function view(position: Vector, lookAt: Vector, up: Vector) {
   // 又由于正交矩阵的逆等于转置
   // 用lookat叉乘up得到x方向
 
-  const ng = lookAt.sub(position).normalizing();
+  const ng = target.sub(position).normalizing();
   const nt = up.normalizing();
   const nx = nt.cross(ng).normalizing();
 

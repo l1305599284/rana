@@ -1,5 +1,4 @@
 import { Vector } from "./vector";
-import { view } from "./transform";
 
 class Light {
   constructor(public position: Vector) {}

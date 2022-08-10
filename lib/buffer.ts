@@ -1,21 +1,27 @@
+import { Matrix } from "./matrix";
+
 export const createBuffer = (
-  data: Float32Array,
+  data: Matrix,
   usage: GPUBufferUsageFlags,
   device: GPUDevice
 ) => {
+  const arr = data.array();
   const desc = {
     size: (data.byteLength * 4 + 3) & ~3,
     usage,
     mappedAtCreation: true,
   };
   const buffer = device.createBuffer(desc);
-  const writeArray = new Float32Array(buffer.getMappedRange());
-  writeArray.set(data);
+  const writeArray =
+    arr instanceof Uint16Array
+      ? new Uint16Array(buffer.getMappedRange())
+      : new Float32Array(buffer.getMappedRange());
+  writeArray.set(arr);
   buffer.unmap();
   return buffer;
 };
 
-export const createUniformBuffer = (data: Float32Array, device: GPUDevice) => {
+export const createUniformBuffer = (data: Matrix, device: GPUDevice) => {
   return createBuffer(
     data,
     GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
@@ -23,7 +29,7 @@ export const createUniformBuffer = (data: Float32Array, device: GPUDevice) => {
   );
 };
 
-export const createVertexBuffer = (data: Float32Array, device: GPUDevice) => {
+export const createVertexBuffer = (data: Matrix, device: GPUDevice) => {
   return createBuffer(
     data,
     GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
