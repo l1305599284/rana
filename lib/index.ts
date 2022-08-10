@@ -122,7 +122,6 @@ const initPipline = async (
   )(1, 5);
 
   const m = tl(0, 0, 2);
-
   const mvp = vp.mul(m);
   mvp.transpose();
 
@@ -150,7 +149,6 @@ const initPipline = async (
     ],
   });
 
-  // device.queue.writeBuffer(mvp, 0, m.d);
   // Create render pipeline
   const layout = device.createPipelineLayout({
     bindGroupLayouts: [bindGroupLayout],
@@ -176,7 +174,6 @@ const initPipline = async (
 
 export const render = async (canvas: HTMLCanvasElement) => {
   const { device, context, format } = await initWebGPU(canvas);
-  // Setup shader modules
   const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
   const { pipeline, uniformGroup } = await initPipline(device, format, {
     depthFormat,
@@ -208,7 +205,6 @@ export const render = async (canvas: HTMLCanvasElement) => {
     1,
     1, // color
   ]);
-
   const dataBuf = createVertexBuffer(vert, device);
 
   // Setup render outputs
@@ -246,8 +242,12 @@ export const render = async (canvas: HTMLCanvasElement) => {
     device.queue.submit([commandEncoder.finish()]);
     requestAnimationFrame(frame);
   };
-  requestAnimationFrame(frame);
-  // ....
+
+  return {
+    start: () => {
+      requestAnimationFrame(frame);
+    },
+  };
 };
 
 // 📈 Position Vertex Buffer Data
@@ -306,7 +306,7 @@ export class Renderer {
   }
 
   // 🌟 Initialize WebGPU
-  async initializeAPI(): Promise<boolean> {
+  async initializeAPI() {
     try {
       // 🏭 Entry to WebGPU
       const entry: GPU = navigator.gpu;

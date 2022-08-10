@@ -3,16 +3,17 @@ import { render, Renderer } from "../lib";
 
 function App() {
   useEffect(() => {
-    const canvas = document.getElementById(
-      "webgpu-canvas"
-    ) as HTMLCanvasElement;
+    (async () => {
+      const canvas = document.getElementById(
+        "webgpu-canvas"
+      ) as HTMLCanvasElement;
 
-    if (!canvas) {
-      console.error("canvas is not exist.");
-    }
-    render(canvas);
-    // const renderer = new Renderer(canvas);
-    // renderer.start();
+      if (!canvas) {
+        console.error("canvas is not exist.");
+      }
+      const engine = await render(canvas);
+      engine.start();
+    })();
   }, []);
   return (
     <>
