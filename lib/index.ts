@@ -4,10 +4,9 @@ import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
 import { createVertexBuffer, createUniformBuffer } from "./buffer";
 import { f32 } from "./vertex";
 import { i, mat4 } from "./matrix";
-import { rx, ry, rz, tl } from "./transform";
+import { rx, ry, rz, tl, orthographic, view } from "./transform";
 import { camera } from "./camera";
 import { vec4 } from "./vector";
-import { orthographic } from "./projection";
 
 const initWebGPU = async () => {
   if (!("gpu" in navigator)) {
@@ -123,15 +122,17 @@ const initPipline = async (
     targets: [{ format }],
   };
 
-  const v = camera(vec4(0, 0, 0), vec4(0, 0, 1), vec4(0, 1, 0)).mat();
+  const v = view(vec4(0, 0, 0), vec4(0, 0, 1), vec4(1, 1, 0));
   const p = orthographic(-4, 4, -4, 4, 0, 4);
-  const m = tl(0);
-  const mvp = p.mul(m).mul(v);
-  mvp.transpose();
+  console.log("p", p.data);
 
-  console.log(m.data);
+  const m = tl(0);
+  const mvp = p.mul(v).mul(m);
+  // mvp.transpose();
+  console.log("mvp", mvp.data);
 
   const mvpBuffer = createUniformBuffer(mvp.data, device);
+
   const bindGroupLayout = device.createBindGroupLayout({
     entries: [
       {
@@ -153,6 +154,7 @@ const initPipline = async (
       },
     ],
   });
+
   // device.queue.writeBuffer(mvp, 0, m.d);
   // Create render pipeline
   const layout = device.createPipelineLayout({
@@ -173,6 +175,7 @@ const initPipline = async (
       cullMode: "back",
     },
   });
+
   return { pipeline, uniformGroup };
 };
 export const render = async () => {

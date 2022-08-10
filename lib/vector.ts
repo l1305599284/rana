@@ -50,15 +50,12 @@ export class Vector {
     return this;
   }
   norm() {
-    return Math.sqrt(
-      this.data.reduce((a, v, i) => {
-        a += v ** 2;
-        return a;
-      }, 0)
-    );
+    const r = this.data[0] ** 2 + this.data[1] ** 2 + this.data[2] ** 2;
+    return Math.sqrt(r);
   }
   normalizing() {
     const n = this.norm();
+
     this.data[0] /= n;
     this.data[1] /= n;
     this.data[2] /= n;
