@@ -1,9 +1,24 @@
-import { Vector } from "./vector";
+import { vec3, vec4, Vector } from "./vector";
 
 class Light {
-  constructor(public position: Vector) {}
+  constructor(
+    public position: Vector,
+    public intensity: number,
+    public radius: number
+  ) {}
+  array() {
+    return new Float32Array([
+      ...this.position.data,
+      this.intensity,
+      this.radius,
+    ]);
+  }
 }
 
-export function light(position: Vector) {
-  return new Light(position);
+export function createPointLight(
+  position: Vector,
+  intensity: number,
+  radius: number
+) {
+  return new Light(position, intensity, radius);
 }

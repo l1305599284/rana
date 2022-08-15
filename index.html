@@ -4,9 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RANA</title>
+    <style>
+      .inputs {
+        position: fixed;
+        top: 1em;
+        right: 1em;
+        display: flex;
+        flex-direction: column;
+        gap: 1em;
+        text-align: left;
+        width: 150px;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
+    <div class="inputs">
+      <span>Ambient Intensity</span>
+      <input
+        id="ambient"
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value="0.1"
+      />
+      <span>Point Light Intensity</span>
+      <input id="point" type="range" min="0" max="1" step="0.01" value="1" />
+      <span>Point Light Radius</span>
+      <input id="radius" type="range" min="0" max="100" step="1" value="20" />
+      <span>Dir Light Intensity</span>
+      <input id="dir" type="range" min="0" max="1" step="0.01" value="0.6" />
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

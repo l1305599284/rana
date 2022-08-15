@@ -1,6 +1,6 @@
 import { Matrix } from "./matrix";
 
-export const createBuffer = (
+export const createMappedBuffer = (
   data: Matrix,
   usage: GPUBufferUsageFlags,
   device: GPUDevice
@@ -21,18 +21,61 @@ export const createBuffer = (
   return buffer;
 };
 
-export const createUniformBuffer = (data: Matrix, device: GPUDevice) => {
-  return createBuffer(
+export const createMappedUniformBuffer = (data: Matrix, device: GPUDevice) => {
+  return createMappedBuffer(
     data,
     GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     device
   );
 };
 
-export const createVertexBuffer = (data: Matrix, device: GPUDevice) => {
-  return createBuffer(
+export const createMappedVertexBuffer = (data: Matrix, device: GPUDevice) => {
+  return createMappedBuffer(
     data,
     GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     device
   );
+};
+
+export const createBuffer = (
+  size: number,
+  usage: GPUBufferUsageFlags,
+  device: GPUDevice
+) => {
+  return device.createBuffer({
+    size,
+    usage,
+  });
+};
+
+export const createUniformBuffer = (size: number, device: GPUDevice) => {
+  return createBuffer(
+    size,
+    GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    device
+  );
+};
+
+export const createVertexBuffer = (size: number, device: GPUDevice) => {
+  return createBuffer(
+    size,
+    GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    device
+  );
+};
+
+export const createBindingGroup = (
+  buffers: GPUBuffer[],
+  layout: GPUBindGroupLayout,
+  device: GPUDevice
+) => {
+  return device.createBindGroup({
+    layout,
+    entries: buffers.map((v, i) => ({
+      binding: i,
+      resource: {
+        buffer: v,
+      },
+    })),
+  });
 };

@@ -1,13 +1,21 @@
-import vertexShaderCode from "./shaders/test.vert.wgsl?raw";
-import vertShaderCode from "./shaders/triangle.vert.wgsl?raw";
-import fragShaderCode from "./shaders/triangle.frag.wgsl?raw";
-import { createVertexBuffer, createUniformBuffer } from "./buffer";
+import vertShaderCode from "./shaders/vert.wgsl?raw";
+import fragShaderCode from "./shaders/frag.wgsl?raw";
+import {
+  createVertexBuffer,
+  createUniformBuffer,
+  createBindingGroup,
+} from "./buffer";
 import { mat4 } from "./matrix";
 import { tl } from "./transform";
 import { perspectiveCamera } from "./camera";
-import { vec4 } from "./vector";
+import { vec3, vec4 } from "./vector";
+import { box, sphere } from "./meshes";
+import { createShaderModule } from "./shaders/index";
+import { createPointLight } from "./light";
 
-const initWebGPU = async (canvas: HTMLCanvasElement) => {
+const NUM = 2;
+
+const initGPU = async (canvas: HTMLCanvasElement) => {
   if (!("gpu" in navigator)) {
     console.error(
       "WebGPU is not supported. Enable chrome://flags/#enable-unsafe-webgpu flag."
@@ -74,88 +82,53 @@ const initPipline = async (
     depthFormat: GPUTextureFormat;
   }
 ) => {
-  const shaderModule = device.createShaderModule({ code: vertexShaderCode });
-
-  // This API is only available in Chrome right now
-  if ("compilationInfo" in shaderModule) {
-    const compilationInfo = await shaderModule.compilationInfo();
-    if (compilationInfo.messages.length > 0) {
-      let hadError = false;
-      console.log("Shader compilation log:");
-      for (let i = 0; i < compilationInfo.messages.length; ++i) {
-        const msg = compilationInfo.messages[i];
-        console.log(`${msg.lineNum}:${msg.linePos} - ${msg.message}`);
-        hadError = hadError || msg.type == "error";
-      }
-      if (hadError) {
-        console.log("Shader failed to compile");
-        return;
-      }
-    }
-  }
-
+  const vsm = await createShaderModule(vertShaderCode, device);
+  const fsm = await createShaderModule(fragShaderCode, device);
   // Vertex attribute state and shader stage
-  const vertexState = <any>{
-    module: shaderModule,
-    entryPoint: "vertexMain",
+  const vertexState = {
+    module: vsm,
+    entryPoint: "main",
     buffers: [
       {
-        arrayStride: 2 * 4 * 4,
+        arrayStride: 8 * 4, // 3 position 2 uv,
         attributes: [
-          { format: "float32x4", offset: 0, shaderLocation: 0 },
-          { format: "float32x4", offset: 4 * 4, shaderLocation: 1 },
+          {
+            // position
+            shaderLocation: 0,
+            offset: 0,
+            format: "float32x3",
+          },
+          {
+            // normal
+            shaderLocation: 1,
+            offset: 3 * 4,
+            format: "float32x3",
+          },
+          {
+            // uv
+            shaderLocation: 2,
+            offset: 6 * 4,
+            format: "float32x2",
+          },
         ],
       },
     ],
   };
 
   const fragmentState = {
-    module: shaderModule,
-    entryPoint: "fragmentMain",
-    targets: [{ format }],
+    module: fsm,
+    entryPoint: "main",
+    targets: [
+      {
+        format: format,
+      },
+    ],
   };
 
-  const vp = perspectiveCamera(
-    vec4(0, 0, 0),
-    vec4(0, 0, 1),
-    vec4(0, 1, 0)
-  )(1, 5);
-
-  const m = tl(0, 0, 2);
-  const mvp = vp.mul(m);
-  mvp.transpose();
-
-  const mvpBuffer = createUniformBuffer(mvp, device);
-
-  const bindGroupLayout = device.createBindGroupLayout({
-    entries: [
-      {
-        binding: 0,
-        visibility: GPUShaderStage.VERTEX,
-        buffer: { type: "uniform" },
-      },
-    ],
-  });
-  const uniformGroup = device.createBindGroup({
-    label: "uniform group for mat4",
-    layout: bindGroupLayout,
-    entries: [
-      {
-        binding: 0,
-        resource: {
-          buffer: mvpBuffer,
-        },
-      },
-    ],
-  });
-
-  // Create render pipeline
-  const layout = device.createPipelineLayout({
-    bindGroupLayouts: [bindGroupLayout],
-  });
-
-  const pipeline = await device.createRenderPipelineAsync({
-    layout: layout,
+  const pipeline = await device.createRenderPipelineAsync(<
+    GPURenderPipelineDescriptor
+  >{
+    layout: "auto",
     vertex: vertexState,
     fragment: fragmentState,
     depthStencil: depthOp && {
@@ -164,79 +137,127 @@ const initPipline = async (
       depthCompare: "less",
     },
     primitive: {
+      topology: "triangle-list",
       frontFace: "cw",
       cullMode: "back",
     },
   });
 
-  return { pipeline, uniformGroup };
+  return { pipeline };
 };
 
 export const render = async (canvas: HTMLCanvasElement) => {
-  const { device, context, format } = await initWebGPU(canvas);
+  const { device, context, format } = await initGPU(canvas);
   const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
-  const { pipeline, uniformGroup } = await initPipline(device, format, {
+  const { pipeline } = await initPipline(device, format, {
     depthFormat,
   });
+  const boxBuffer = {
+    vertex: device.createBuffer({
+      label: "GPUBuffer store vertex",
+      size: box.vertex.byteLength,
+      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    }),
+    index: device.createBuffer({
+      label: "GPUBuffer store vertex index",
+      size: box.index.byteLength,
+      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    }),
+  };
+  const sphereBuffer = {
+    vertex: device.createBuffer({
+      label: "GPUBuffer store vertex",
+      size: sphere.vertex.byteLength,
+      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    }),
+    index: device.createBuffer({
+      label: "GPUBuffer store vertex index",
+      size: sphere.index.byteLength,
+      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    }),
+  };
+  device.queue.writeBuffer(boxBuffer.vertex, 0, box.vertex);
+  device.queue.writeBuffer(boxBuffer.index, 0, box.index);
+  device.queue.writeBuffer(sphereBuffer.vertex, 0, sphere.vertex);
+  device.queue.writeBuffer(sphereBuffer.index, 0, sphere.index);
 
-  const vert = mat4([
-    1,
-    -1,
-    0,
-    1, // position
-    1,
-    0,
-    0,
-    1, // color
-    -1,
-    -1,
-    0,
-    1, // position
-    0,
-    0.5,
-    0,
-    1, // color
-    0,
-    1,
-    0,
-    1, // position
-    0,
-    0,
-    1,
-    1, // color
-  ]);
-  const dataBuf = createVertexBuffer(vert, device);
+  const vp = perspectiveCamera(
+    vec4(0, 0, 0),
+    vec4(0, 0, 1),
+    vec4(0, 1, 0)
+  )(1, 5);
+
+  const m = tl(0, 0, 2);
+
+  const mvp = vp.mul(m);
+  mvp.transpose();
+
+  const modelViewBuffer = createUniformBuffer(16 * 4, device);
+  const projectionBuffer = createUniformBuffer(16 * 4, device);
+  const colorBuffer = createUniformBuffer(16 * 4, device);
+  const ambientBuffer = createUniformBuffer(4, device);
+  const pointBuffer = createUniformBuffer(8 * 4, device);
+
+  const mvpBindingGroup = createBindingGroup(
+    [modelViewBuffer, projectionBuffer, colorBuffer],
+    pipeline.getBindGroupLayout(0),
+    device
+  );
+  const lightGroup = createBindingGroup(
+    [ambientBuffer, pointBuffer],
+    pipeline.getBindGroupLayout(1),
+    device
+  );
+
+  const colorAttachments = <Iterable<GPURenderPassColorAttachment | null>>[
+    {
+      view: context.getCurrentTexture().createView(),
+      clearValue: { r: 0, g: 0, b: 0, a: 1 },
+      loadOp: "clear",
+      storeOp: "store",
+    },
+  ];
+  const depthStencilAttachment = <GPURenderPassDepthStencilAttachment>{
+    view: depthTexture.createView(),
+    depthClearValue: 1,
+    depthLoadOp: "clear",
+    depthStoreOp: "store",
+    stencilClearValue: 0,
+    stencilLoadOp: "clear",
+    stencilStoreOp: "store",
+  };
+  const renderPassDescriptor = {
+    colorAttachments,
+    depthStencilAttachment,
+  };
 
   // Setup render outputs
+  const ambient = new Float32Array([0.01]);
 
+  const lightPosition = vec3(0, 0, 0);
+  let lightIntensity = 1;
+  let lightRadius = 1;
+  const l = createPointLight(lightPosition, lightIntensity, lightRadius);
   // Render!
   const frame = function () {
     const commandEncoder = device.createCommandEncoder();
 
-    const renderPass = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: context.getCurrentTexture().createView(),
-          clearValue: { r: 0, g: 0, b: 0, a: 1 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-      depthStencilAttachment: {
-        view: depthTexture.createView(),
-        depthClearValue: 1,
-        depthLoadOp: "clear",
-        depthStoreOp: "store",
-        stencilClearValue: 0,
-        stencilLoadOp: "clear",
-        stencilStoreOp: "store",
-      },
-    });
+    const renderPass = commandEncoder.beginRenderPass(renderPassDescriptor);
 
     renderPass.setPipeline(pipeline);
-    renderPass.setBindGroup(0, uniformGroup);
-    renderPass.setVertexBuffer(0, dataBuf);
-    renderPass.draw(3, 1);
+
+    device.queue.writeBuffer(ambientBuffer, 0, ambient);
+    device.queue.writeBuffer(pointBuffer, 0, l.array());
+    renderPass.setBindGroup(0, mvpBindingGroup);
+    renderPass.setBindGroup(1, lightGroup);
+    // set box vertex
+    renderPass.setVertexBuffer(0, boxBuffer.vertex);
+    renderPass.setIndexBuffer(boxBuffer.index, "uint16");
+    renderPass.drawIndexed(box.indexCount, NUM / 2, 0, 0, 0);
+    // set sphere vertex
+    renderPass.setVertexBuffer(0, sphereBuffer.vertex);
+    renderPass.setIndexBuffer(sphereBuffer.index, "uint16");
+    renderPass.drawIndexed(sphere.indexCount, NUM / 2, 0, 0, NUM / 2);
     renderPass.end();
 
     device.queue.submit([commandEncoder.finish()]);
@@ -294,11 +315,13 @@ export class Renderer {
   commandEncoder: GPUCommandEncoder;
   passEncoder: GPURenderPassEncoder;
 
-  constructor(public canvas: HTMLCanvasElement) {}
+  constructor(public canvas: HTMLCanvasElement) {
+    this.start();
+  }
 
   // 🏎️ Start the rendering engine
   async start() {
-    if (await this.initializeAPI()) {
+    if (await this.initializeGPU()) {
       this.resizeBackings();
       await this.initializeResources();
       this.render();
@@ -306,16 +329,16 @@ export class Renderer {
   }
 
   // 🌟 Initialize WebGPU
-  async initializeAPI() {
+  async initializeGPU() {
     try {
       // 🏭 Entry to WebGPU
-      const entry: GPU = navigator.gpu;
-      if (!entry) {
+      const gpu: GPU = navigator.gpu;
+      if (!gpu) {
         return false;
       }
 
       // 🔌 Physical Device Adapter
-      this.adapter = await entry.requestAdapter({
+      this.adapter = await gpu.requestAdapter({
         powerPreference: "high-performance",
       });
 

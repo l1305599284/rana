@@ -11,8 +11,16 @@ function App() {
       if (!canvas) {
         console.error("canvas is not exist.");
       }
-      const engine = await render(canvas);
-      engine.start();
+      render(canvas);
+      // const { render, createScene, createCamera, geo } = await createEngine(
+      //   canvas
+      // );
+      // const { createSphere } = geo;
+      // const sphere = createSphere();
+      // const camera = createCamera();
+      // const scene = createScene();
+      // scene.add(sphere);
+      // render(scene, camera);
     })();
   }, []);
   return (
@@ -26,9 +34,6 @@ function App() {
         }}
       >
         <canvas id="webgpu-canvas" width="128" height="128"></canvas>
-      </div>
-      <div>
-        <input type="range" min="0" max="1" step="0.02" id="tx" />
       </div>
     </>
   );
