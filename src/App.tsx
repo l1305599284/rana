@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { render, Renderer } from "../lib";
+import { render } from "../lib";
 
 function App() {
   useEffect(() => {
@@ -12,6 +12,7 @@ function App() {
         console.error("canvas is not exist.");
       }
       render(canvas);
+
       // const { render, createScene, createCamera, geo } = await createEngine(
       //   canvas
       // );

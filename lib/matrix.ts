@@ -20,6 +20,7 @@ export class Matrix {
     return this.data;
   }
   inverses() {}
+
   mul(target: Matrix) {
     const v1 =
       this.data[0] * target.data[0] +
@@ -167,6 +168,12 @@ export class Matrix {
     this.data = nd;
     nd = null;
     return this;
+  }
+  static muls(ms: Matrix[]) {
+    return ms.reverse().reduce((a, v) => {
+      a.mul(v);
+      return a;
+    }, i());
   }
 }
 

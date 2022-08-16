@@ -38,26 +38,62 @@ export const createMappedVertexBuffer = (data: Matrix, device: GPUDevice) => {
 };
 
 export const createBuffer = (
+  label: string,
   size: number,
   usage: GPUBufferUsageFlags,
   device: GPUDevice
 ) => {
   return device.createBuffer({
+    label,
     size,
     usage,
   });
 };
 
-export const createUniformBuffer = (size: number, device: GPUDevice) => {
+export const createUniformBuffer = (
+  label: string,
+  size: number,
+  device: GPUDevice
+) => {
   return createBuffer(
+    label,
     size,
     GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     device
   );
 };
 
-export const createVertexBuffer = (size: number, device: GPUDevice) => {
+export const createStorageBuffer = (
+  label: string,
+  size: number,
+  device: GPUDevice
+) => {
   return createBuffer(
+    label,
+    size,
+    GPUBufferUsage.STORAGE | GPUBufferUsage.COPY_DST,
+    device
+  );
+};
+export const createIndexBuffer = (
+  label: string,
+  size: number,
+  device: GPUDevice
+) => {
+  return createBuffer(
+    label,
+    size,
+    GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    device
+  );
+};
+export const createVertexBuffer = (
+  label: string,
+  size: number,
+  device: GPUDevice
+) => {
+  return createBuffer(
+    label,
     size,
     GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     device
@@ -65,11 +101,13 @@ export const createVertexBuffer = (size: number, device: GPUDevice) => {
 };
 
 export const createBindingGroup = (
+  label: string,
   buffers: GPUBuffer[],
   layout: GPUBindGroupLayout,
   device: GPUDevice
 ) => {
   return device.createBindGroup({
+    label,
     layout,
     entries: buffers.map((v, i) => ({
       binding: i,

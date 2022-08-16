@@ -6,6 +6,7 @@ class Light {
     public intensity: number,
     public radius: number
   ) {}
+
   array() {
     return new Float32Array([
       ...this.position.data,

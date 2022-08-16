@@ -1,5 +1,6 @@
-import { mat4 } from "./matrix";
-import { Vector } from "./vector";
+import { mat4, Matrix } from "./matrix";
+import { vec3, Vector } from "./vector";
+
 export function radians(angle: number) {
   return (angle * Math.PI) / 180;
 }
@@ -34,6 +35,20 @@ export function scale(x: number, y?: number, z?: number) {
   }
   return mat4([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 / x]);
 }
+
+export function transform(
+  t: Vector = vec3(0, 0, 0),
+  r: Vector = vec3(0, 0, 0),
+  s: Vector = vec3(1, 1, 1)
+) {
+  const trans = tl(t[0], t[1], t[2]);
+  const rox = rx(r[0]);
+  const roy = ry(r[1]);
+  const roz = rz(r[2]);
+  const sca = scale(s[0], s[1], s[2]);
+  return Matrix.muls([trans, rox, roy, roz, sca]);
+}
+
 export function reflect(x?: boolean, y?: boolean, z?: boolean) {
   return mat4([
     x ? -1 : 1,
