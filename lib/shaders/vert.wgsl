@@ -4,10 +4,10 @@
 
 struct VertexOutput {
     @builtin(position) Position : vec4<f32>,
-    // @location(0) fragPosition : vec3<f32>,
-    // @location(1) fragNormal : vec3<f32>,
-    // @location(2) fragUV: vec2<f32>,
-    // @location(3) fragColor: vec4<f32>
+    @location(0) fragPosition : vec3<f32>,
+    @location(1) fragNormal : vec3<f32>,
+    @location(2) fragUV: vec2<f32>,
+    @location(3) fragColor: vec4<f32>
 };
 
 @vertex
@@ -23,11 +23,11 @@ fn main(
     
     var output : VertexOutput;
     output.Position = mvp * pos;
-    // output.fragPosition = (mt * pos).xyz;
-    // // it should use transpose(inverse(mt)) if consider non-uniform scale
-    // // hint: inverse() is not available in wgsl, better do in JS or CS
-    // output.fragNormal =  (mt * vec4<f32>(normal, 0.0)).xyz;
-    // output.fragUV = uv;
-    // output.fragColor = colors[index];
+    output.fragPosition = (mt * pos).xyz;
+    // it should use transpose(inverse(mt)) if consider non-uniform scale
+    // hint: inverse() is not available in wgsl, better do in JS or CS
+    output.fragNormal =  (mt * vec4<f32>(normal, 0.0)).xyz;
+    output.fragUV = uv;
+    output.fragColor = colors[index];
     return output;
 }

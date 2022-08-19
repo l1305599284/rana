@@ -8,14 +8,14 @@ import {
   createIndexBuffer,
 } from "./buffer";
 import { mat4 } from "./matrix";
-import { tl, transform } from "./transform";
+import { scale, tl, transform } from "./transform";
 import { perspectiveCamera } from "./camera";
 import { vec3, vec4 } from "./vector";
-import { triangle, box, sphere } from "./meshes";
+import { triangle, ground, box, sphere } from "./meshes";
 import { createShaderModule } from "./shaders/index";
 import { createPointLight } from "./light";
 
-const NUM = 5;
+const NUM = 2;
 
 const initGPU = async (canvas: HTMLCanvasElement) => {
   if (!("gpu" in navigator)) {
@@ -81,7 +81,8 @@ const initPipline = async (
   device: GPUDevice,
   format: GPUTextureFormat,
   depthOp?: {
-    depthFormat: GPUTextureFormat;
+    layout?: GPUPipelineLayout;
+    depthFormat?: GPUTextureFormat;
   }
 ) => {
   const vsm = await createShaderModule(vertShaderCode, device);
@@ -131,7 +132,7 @@ const initPipline = async (
     GPURenderPipelineDescriptor
   >{
     label: "Basic Pipline",
-    layout: "auto",
+    layout: depthOp.layout || "auto",
     vertex: vertexState,
     fragment: fragmentState,
     depthStencil: depthOp && {
@@ -152,38 +153,76 @@ const initPipline = async (
 export const render = async (canvas: HTMLCanvasElement) => {
   const { device, context, format } = await initGPU(canvas);
   const { depthFormat, depthTexture } = await initDepthStencil(device, canvas);
-  const { pipeline } = await initPipline(device, format, {
-    depthFormat,
-  });
-  const boxBuffer = {
-    vertex: createVertexBuffer("box vertex", box.vertex.byteLength, device),
-    index: createIndexBuffer("box index", box.index.byteLength, device),
-  };
+
   // const boxBuffer = {
-  //   vertex: createVertexBuffer(box.vertex.byteLength, device),
-  //   index: createIndexBuffer(box.index.byteLength, device),
+  //   vertex: createVertexBuffer("box vertex", box.vertex.byteLength, device),
+  //   index: createIndexBuffer("box index", box.index.byteLength, device),
   // };
+  // const groundBuffer = {
+  //   vertex: createVertexBuffer(
+  //     "ground index",
+  //     ground.vertex.byteLength,
+  //     device
+  //   ),
+  //   index: createIndexBuffer("ground index", ground.index.byteLength, device),
+  // };
+  const triangleBuffer = {
+    vertex: createVertexBuffer(
+      "triangle index",
+      triangle.vertex.byteLength,
+      device
+    ),
+    index: createIndexBuffer(
+      "triangle index",
+      triangle.index.byteLength,
+      device
+    ),
+  };
   // const sphereBuffer = {
-  //   vertex: createVertexBuffer(sphere.vertex.byteLength, device),
-  //   index: createIndexBuffer(sphere.index.byteLength, device),
+  //   vertex: createVertexBuffer(
+  //     "sphereBuffer",
+  //     sphere.vertex.byteLength,
+  //     device
+  //   ),
+  //   index: createIndexBuffer("sphereBuffer", sphere.index.byteLength, device),
   // };
-  // device.queue.writeBuffer(boxBuffer.vertex, 0, box.vertex);
-  // device.queue.writeBuffer(boxBuffer.index, 0, box.index);
+  device.queue.writeBuffer(triangleBuffer.vertex, 0, triangle.vertex);
+  device.queue.writeBuffer(triangleBuffer.index, 0, triangle.index);
+
+  // device.queue.writeBuffer(groundBuffer.vertex, 0, triangle.vertex);
+  // device.queue.writeBuffer(groundBuffer.index, 0, triangle.index);
+
   // device.queue.writeBuffer(sphereBuffer.vertex, 0, sphere.vertex);
   // device.queue.writeBuffer(sphereBuffer.index, 0, sphere.index);
-  device.queue.writeBuffer(boxBuffer.vertex, 0, box.vertex);
-  device.queue.writeBuffer(boxBuffer.index, 0, box.index);
+  // device.queue.writeBuffer(boxBuffer.vertex, 0, box.vertex);
+  // device.queue.writeBuffer(boxBuffer.index, 0, box.index);
 
-  const modelBuffer = createStorageBuffer("modelBuffer", 16 * 4 * NUM, device);
+  const modelBuffer = createStorageBuffer(
+    "modelBuffer",
+    4 * 4 * 4 * NUM,
+    device
+  );
 
   const projectionBuffer = createUniformBuffer(
     "projectionBuffer",
-    16 * 4,
+    4 * 4 * 4,
     device
   );
 
   const colorBuffer = createStorageBuffer("colorBuffer", 4 * 4 * NUM, device);
+  const { pipeline } = await initPipline(device, format, {
+    depthFormat,
+  });
 
+  // const bindGroupLayout = device.createBindGroupLayout({
+  //   entries: [{
+  //     binding: 0, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" }
+  //   }, {
+  //     binding: 1, visibility: GPUShaderStage.VERTEX, buffer: { type: "uniform" }
+  //   }, {
+  //     binding: 2, visibility: GPUShaderStage.VERTEX, buffer: { type: "read-only-storage" }
+  //   }]
+  // })
   const mvpBindingGroup = createBindingGroup(
     "mvpBindingGroup",
     [modelBuffer, projectionBuffer, colorBuffer],
@@ -191,56 +230,65 @@ export const render = async (canvas: HTMLCanvasElement) => {
     device
   );
 
-  // const ambientBuffer = createUniformBuffer(4, device);
-  // const lightBuffer = createUniformBuffer(8 * 4, device);
-  // const lightGroup = createBindingGroup(
-  //   "lightGroup Group with matrix",
-  //   [ambientBuffer, lightBuffer],
-  //   pipeline.getBindGroupLayout(1),
-  //   device
-  // );
+  const ambientBuffer = createUniformBuffer("ambientBuffer", 4, device);
+  const ambientColorBuffer = createUniformBuffer(
+    "ambientColorBuffer",
+    16,
+    device
+  );
+
+  const lightBuffer = createStorageBuffer("lightBuffer", 5 * 4, device);
+  const lightGroup = createBindingGroup(
+    "lightGroup Group with matrix",
+    [lightBuffer],
+    pipeline.getBindGroupLayout(1),
+    device
+  );
 
   // Setup render outputs
-  // const ambient = new Float32Array([0.01]);
+  // const ai = new Float32Array([0.1]);
+  const pl = new Float32Array([0, 0, 0, 0, 0]);
+  let n = 1,
+    z = 0,
+    f = 5,
+    ss = 1,
+    fov = 150,
+    left = 0,
+    top = 0,
+    cx = 0,
+    cz = 0;
 
-  // const lightPosition = vec3(0, 0, 0);
-  // let lightIntensity = 1;
-  // let lightRadius = 1;
   // // create objects
   // const scene: any[] = [];
   const modelMatrixes = new Float32Array(NUM * 4 * 4);
   const colors = new Float32Array(NUM * 4);
-
-  const cameraPosition = vec4(0, 0, 0);
-  const cameraLookAt = vec4(0, 0, 1);
-  const cameraUp = vec4(0, 1, 0);
-  const vp = perspectiveCamera(cameraPosition, cameraLookAt, cameraUp)(1, 5);
-  device.queue.writeBuffer(projectionBuffer, 0, vp.array());
-
-  for (let i = 0; i < NUM; i++) {
-    modelMatrixes.set(tl(Math.random(), Math.random(), 2).array(), i * 4 * 4);
-
-    colors.set([Math.random(), Math.random(), Math.random(), 1], i * 4);
-    // scene.push({ position, rotation, scale });
-  }
 
   // const light = createPointLight(
   //   lightPosition,
   //   lightIntensity,
   //   lightRadius
   // ).array();
-  console.log("colors", colors);
+  const cameraLookAt = vec4(0, 0, 5);
+  const cameraUp = vec4(0, 1, 0);
+  for (let i = 0; i < NUM; i++) {
+    colors.set([Math.random(), Math.random(), Math.random(), 1], i * 4);
+    // scene.push({ position, rotation, scale });
+  }
 
   device.queue.writeBuffer(colorBuffer, 0, colors);
-  device.queue.writeBuffer(modelBuffer, 0, modelMatrixes);
-
   // Render!
   const frame = function () {
-    // light[3] = lightIntensity;
-    // light[4] = lightRadius;
+    let t = tl(left, top, z).array();
+    modelMatrixes.set(t);
+    // scene.push({ position, rotation, scale });
+    device.queue.writeBuffer(lightBuffer, 0, pl);
+    const cameraPosition = vec4(cx, 0, cz);
 
-    // device.queue.writeBuffer(ambientBuffer, 0, ambient);
-    // device.queue.writeBuffer(lightBuffer, 0, light);
+    const vp = perspectiveCamera(cameraPosition, cameraLookAt, cameraUp);
+
+    let proj = vp(n, f, fov).array();
+    device.queue.writeBuffer(modelBuffer, 0, modelMatrixes);
+    device.queue.writeBuffer(projectionBuffer, 0, proj);
 
     const commandEncoder = device.createCommandEncoder();
 
@@ -266,15 +314,24 @@ export const render = async (canvas: HTMLCanvasElement) => {
 
     renderPass.setPipeline(pipeline);
     renderPass.setBindGroup(0, mvpBindingGroup);
-    // renderPass.setBindGroup(1, lightGroup);
+    renderPass.setBindGroup(1, lightGroup);
+
+    // set traingle vertex
+    // renderPass.setVertexBuffer(0, groundBuffer.vertex);
+    // renderPass.setIndexBuffer(groundBuffer.index, "uint16");
+    // renderPass.drawIndexed(ground.indexCount, NUM / 2, 0, 0, 0);
+    // set traingle vertex
+    renderPass.setVertexBuffer(0, triangleBuffer.vertex);
+    renderPass.setIndexBuffer(triangleBuffer.index, "uint16");
+    renderPass.drawIndexed(triangle.indexCount, NUM, 0, 0, 0);
     // set box vertex
-    renderPass.setVertexBuffer(0, boxBuffer.vertex);
-    renderPass.setIndexBuffer(boxBuffer.index, "uint16");
-    renderPass.drawIndexed(box.indexCount, NUM, 0, 0, 0);
+    // renderPass.setVertexBuffer(0, boxBuffer.vertex);
+    // renderPass.setIndexBuffer(boxBuffer.index, "uint16");
+    // renderPass.drawIndexed(box.indexCount, NUM, 0, 0, 0);
     // set sphere vertex
     // renderPass.setVertexBuffer(0, sphereBuffer.vertex);
     // renderPass.setIndexBuffer(sphereBuffer.index, "uint16");
-    // renderPass.drawIndexed(sphere.indexCount, NUM / 2, 0, 0, NUM / 2);
+    // renderPass.drawIndexed(sphere.indexCount, NUM, 0, 0, NUM);
     renderPass.end();
 
     device.queue.submit([commandEncoder.finish()]);
@@ -282,13 +339,61 @@ export const render = async (canvas: HTMLCanvasElement) => {
   };
   requestAnimationFrame(frame);
   // UI
-  // document.querySelector("#ambient")?.addEventListener("input", (e: Event) => {
-  //   ambient[0] = +(e.target as HTMLInputElement).value;
+
+  // document.getElementById("ai")?.addEventListener("input", (e: any) => {
+  //   ai[0] = e.target.value * 1;
   // });
-  // document.querySelector("#point")?.addEventListener("input", (e: Event) => {
-  //   lightIntensity = +(e.target as HTMLInputElement).value;
+  // document.getElementById("ac")?.addEventListener("input", (e: any) => {
+  //   const color = e.target.value;
+  //   const r = parseInt(color.substr(1, 2), 16);
+  //   const g = parseInt(color.substr(3, 2), 16);
+  //   const b = parseInt(color.substr(5, 2), 16);
+  //   const c = vec3(r, g, b).normalizing().data;
+  //   ac.set([c[0], c[1], c[2], 1]);
   // });
-  // document.querySelector("#radius")?.addEventListener("input", (e: Event) => {
-  //   lightRadius = +(e.target as HTMLInputElement).value;
-  // });
+  document.getElementById("plx")?.addEventListener("input", (e: any) => {
+    pl[0] = e.target.value * 1;
+  });
+  document.getElementById("ply")?.addEventListener("input", (e: any) => {
+    pl[1] = e.target.value * 1;
+  });
+  document.getElementById("plz")?.addEventListener("input", (e: any) => {
+    pl[2] = e.target.value * 1;
+  });
+  document.getElementById("pli")?.addEventListener("input", (e: any) => {
+    pl[3] = e.target.value * 1;
+  });
+  document.getElementById("plr")?.addEventListener("input", (e: any) => {
+    pl[4] = e.target.value * 1;
+  });
+
+  document.getElementById("left")?.addEventListener("input", (e: any) => {
+    left = e.target.value * 1;
+  });
+  document.getElementById("top")?.addEventListener("input", (e: any) => {
+    top = e.target.value * 1;
+  });
+  document.getElementById("z")?.addEventListener("input", (e: any) => {
+    z = e.target.value * 1;
+  });
+  document.getElementById("cx")?.addEventListener("input", (e: any) => {
+    cx = e.target.value * 1;
+  });
+
+  document.getElementById("cz")?.addEventListener("input", (e: any) => {
+    cz = e.target.value * 1;
+  });
+  document.getElementById("scale")?.addEventListener("input", (e: any) => {
+    ss = e.target.value * 1;
+  });
+
+  document.getElementById("fov")?.addEventListener("input", (e: any) => {
+    fov = +e.target.value * 1;
+  });
+  document.getElementById("n")?.addEventListener("input", (e: any) => {
+    n = e.target.value * 1;
+  });
+  document.getElementById("f")?.addEventListener("input", (e: any) => {
+    f = e.target.value * 1;
+  });
 };

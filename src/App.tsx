@@ -34,7 +34,7 @@ function App() {
           padding: "1em",
         }}
       >
-        <canvas id="webgpu-canvas" width="128" height="128"></canvas>
+        <canvas id="webgpu-canvas" width="256" height="256"></canvas>
       </div>
     </>
   );
