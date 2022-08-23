@@ -1,52 +1,46 @@
-import { mat4, Matrix } from "./matrix";
+import { i, mat4, Matrix } from "./matrix";
 import { vec3, Vector } from "./vector";
 
 export function radians(angle: number) {
   return (angle * Math.PI) / 180;
 }
-export function triangle(angle: number) {
+function triangle(angle: number) {
   return [Math.sin(radians(angle)), Math.cos(radians(angle))];
 }
 
 // 为了解决平移，引入齐次坐标
-export function tl(x: number = 0, y: number = 0, z: number = 0) {
+export function translate(x: number = 0, y: number = 0, z: number = 0) {
   return mat4([1, 0, 0, x, 0, 1, 0, y, 0, 0, 1, z, 0, 0, 0, 1]);
 }
 
-// 绕原点逆时针
-export function rx(angle: number) {
+function rotateX(angle: number) {
   const [s, c] = triangle(angle);
   return mat4([1, 0, 0, 0, 0, c, -s, 0, 0, s, c, 0, 0, 0, 0, 1]);
 }
-// 绕原点逆时针
-export function ry(angle: number) {
+
+function rotateY(angle: number) {
   const [s, c] = triangle(angle);
   return mat4([c, 0, 0, s, 0, 1, 0, 0, -s, 0, 0, c, 0, 0, 0, 1]);
 }
-// 绕原点逆时针
-export function rz(angle: number) {
+
+function rotateZ(angle: number) {
   const [s, c] = triangle(angle);
   return mat4([c, -s, 0, 0, s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
 }
 
-export function scale(x: number, y?: number, z?: number) {
-  if ((x && y) || (x && z)) {
-    mat4([x || 1, 0, 0, 0, 0, y || 1, 0, 0, 0, 0, z || 1, 0, 0, 0, 0, 1]);
+export function rotate(x: number, y?: number, z?: number) {
+  const r = rotateX(x);
+  if (y) {
+    r.mul(rotateY(y));
   }
-  return mat4([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1 / x]);
+  if (z) {
+    r.mul(rotateZ(z));
+  }
+  return r;
 }
 
-export function transform(
-  t: Vector = vec3(0, 0, 0),
-  r: Vector = vec3(0, 0, 0),
-  s: Vector = vec3(1, 1, 1)
-) {
-  const trans = tl(t[0], t[1], t[2]);
-  const rox = rx(r[0]);
-  const roy = ry(r[1]);
-  const roz = rz(r[2]);
-  const sca = scale(s[0], s[1], s[2]);
-  return Matrix.muls([trans, rox, roy, roz, sca]);
+export function scale(x: number, y?: number, z?: number) {
+  return mat4([x || 1, 0, 0, 0, 0, y || 1, 0, 0, 0, 0, z || 1, 0, 0, 0, 0, 1]);
 }
 
 export function reflect(x?: boolean, y?: boolean, z?: boolean) {
@@ -79,7 +73,7 @@ export function reflect(x?: boolean, y?: boolean, z?: boolean) {
 export function lookAt(position: Vector, target: Vector, up: Vector) {
   // 相当于物体相对于相机相对于原点的运动
   // 先平移相机到原点
-  const tv = tl(-position.data[0], -position.data[1], -position.data[2]);
+  const tv = translate(-position.data[0], -position.data[1], -position.data[2]);
 
   // 再旋转相机坐标系到原坐标系
   // 由于不好算，先算逆，即原坐标系旋转到相机坐标系
@@ -121,7 +115,7 @@ export function orthographic(
 ) {
   // 把世界坐标区域缩放到对应技术平台的标准NDC
   // 这里是webgpu的左手坐标系的z位0-1的区域
-  const translateMat = tl(-(r + l) / 2, -(t + b) / 2, -n);
+  const translateMat = translate(-(r + l) / 2, -(t + b) / 2, -n);
   const scaleMat = scale(2 / (r - l), 2 / (t - b), 1 / f);
   return scaleMat.mul(translateMat);
 }
@@ -133,35 +127,34 @@ export function perspective(
   aspectRatio: number = 1
 ) {
   if (n != 0) {
-    
-  
-  const t = Math.tan(radians(fov / 2)) * n;
-  const r = aspectRatio * t;
-  const l = -r;
-  const b = -t;
-  // 先把视锥体压缩成透视正交体
-  const frustumToOrthMat = mat4([
-    n,
-    0,
-    0,
-    0,
-    0,
-    n,
-    0,
-    0,
-    0,
-    0,
-    n + f,
-    -n * f,
-    0,
-    0,
-    1,
-    0,
-  ]);
-  console.log("frustumToOrthMat",frustumToOrthMat.array());
-  
-  // 再用正交投影
-  const orth = orthographic(l, r, b, t, n, f);
+    const t = Math.tan(radians(fov / 2)) * n;
+    const r = aspectRatio * t;
+    const l = -r;
+    const b = -t;
+    // 先把视锥体压缩成透视正交体
+    const frustumToOrthMat = mat4([
+      n,
+      0,
+      0,
+      0,
+      0,
+      n,
+      0,
+      0,
+      0,
+      0,
+      n + f,
+      -n * f,
+      0,
+      0,
+      1,
+      0,
+    ]);
+    console.log("frustumToOrthMat", frustumToOrthMat.array());
 
-  return orth.mul(frustumToOrthMat);}
+    // 再用正交投影
+    const orth = orthographic(l, r, b, t, n, f);
+
+    return orth.mul(frustumToOrthMat);
+  }
 }

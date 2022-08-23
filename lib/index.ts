@@ -8,7 +8,7 @@ import {
   createIndexBuffer,
 } from "./buffer";
 import { mat4 } from "./matrix";
-import { scale, tl, transform } from "./transform";
+import { scale, translate } from "./transform";
 import { perspectiveCamera } from "./camera";
 import { vec3, vec4 } from "./vector";
 import { triangle, ground, box, sphere } from "./meshes";
@@ -209,7 +209,7 @@ export const render = async (canvas: HTMLCanvasElement) => {
     device
   );
 
-  const colorBuffer = createStorageBuffer("colorBuffer", 4 * 4  * NUM, device);
+  const colorBuffer = createStorageBuffer("colorBuffer", 4 * 4 * NUM, device);
   const { pipeline } = await initPipline(device, format, {
     depthFormat,
   });
@@ -230,7 +230,6 @@ export const render = async (canvas: HTMLCanvasElement) => {
     device
   );
 
-
   const lightBuffer = createStorageBuffer("lightBuffer", 5 * 4, device);
   const lightGroup = createBindingGroup(
     "lightGroup Group with matrix",
@@ -243,11 +242,8 @@ export const render = async (canvas: HTMLCanvasElement) => {
   // const ai = new Float32Array([0.1]);
   const pl = new Float32Array([0, 0, 0, 1, 5]);
   let n = 1,
-
     f = 1000,
-
     fov = 150,
-
     cx = 0,
     cz = 0;
 
@@ -262,28 +258,27 @@ export const render = async (canvas: HTMLCanvasElement) => {
   //   lightRadius
   // ).array();
   const cameraLookAt = vec4(0, 0, 1);
-  
+
   for (let i = 0; i < NUM; i++) {
-    modelMatrixes.set(tl(Math.random()*5-2, Math.random()*5-2, 2).array(),i*16);
-    colors.set([Math.random(), Math.random(), Math.random(), 1
-     ], i * 4);
-      
+    modelMatrixes.set(
+      translate(Math.random() * 5 - 2, Math.random() * 5 - 2, 2).array(),
+      i * 16
+    );
+    colors.set([Math.random(), Math.random(), Math.random(), 1], i * 4);
+
     // scene.push({ position, rotation, scale });
   }
-    device.queue.writeBuffer(modelBuffer, 0, modelMatrixes);
+  device.queue.writeBuffer(modelBuffer, 0, modelMatrixes);
   device.queue.writeBuffer(colorBuffer, 0, colors);
   // Render!
   const frame = function () {
-
     // scene.push({ position, rotation, scale });
     device.queue.writeBuffer(lightBuffer, 0, pl);
 
-    
     const cameraPosition = vec4(cx, 0, cz);
     const cameraUp = vec4(0, 1, 0);
     const lookAt = perspectiveCamera(cameraPosition, cameraLookAt, cameraUp);
-    
-    
+
     let projection = lookAt(n, f, fov).array();
 
     device.queue.writeBuffer(projectionBuffer, 0, projection);
@@ -370,8 +365,8 @@ export const render = async (canvas: HTMLCanvasElement) => {
   });
 
   document.getElementById("cz")?.addEventListener("input", (e: any) => {
-    console.log("cz",e.target.value);
-    
+    console.log("cz", e.target.value);
+
     cz = e.target.value * 1;
   });
 
