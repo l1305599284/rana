@@ -10,10 +10,11 @@ fn main(
 ) -> @location(0) vec4<f32> {
     let objectColor = fragColor.rgb;
     let pointLightColor = vec3(1.0,1.0,1.0);
-
+    let ambientColor = vec3(1.0, 1.0, 1.0);
+    let ambientIntensity = 0.5;
     var lightResult = vec3(0.0, 0.0, 0.0);
     // // ambient
-    // lightResult += ambientColor * ambientIntensity;
+    lightResult += ambientColor * ambientIntensity;
     
     // // Point Light
        var pointPosition = vec3(pl[0],pl[1],pl[2]);

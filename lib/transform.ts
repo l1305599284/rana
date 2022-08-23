@@ -132,9 +132,9 @@ export function perspective(
   fov: number = 150,
   aspectRatio: number = 1
 ) {
-  if (n == 0) {
-    throw new Error("n can't equils 0!");
-  }
+  if (n != 0) {
+    
+  
   const t = Math.tan(radians(fov / 2)) * n;
   const r = aspectRatio * t;
   const l = -r;
@@ -158,8 +158,10 @@ export function perspective(
     1,
     0,
   ]);
+  console.log("frustumToOrthMat",frustumToOrthMat.array());
+  
   // 再用正交投影
   const orth = orthographic(l, r, b, t, n, f);
 
-  return orth.mul(frustumToOrthMat);
+  return orth.mul(frustumToOrthMat);}
 }
