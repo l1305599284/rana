@@ -150,7 +150,6 @@ export function perspective(
       1,
       0,
     ]);
-    console.log("frustumToOrthMat", frustumToOrthMat.array());
 
     // 再用正交投影
     const orth = orthographic(l, r, b, t, n, f);
