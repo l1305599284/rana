@@ -1,6 +1,6 @@
 import { vec3, vec4, Vector } from "./vector";
 
-class Light {
+export class Light {
   constructor(
     public position: Vector,
     public intensity: number,

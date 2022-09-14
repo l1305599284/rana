@@ -1,7 +1,7 @@
 import { Vector } from "./vector";
 import { lookAt, orthographic, perspective } from "./transform";
 
-class Camera {
+export class Camera {
   constructor(
     public position: Vector,
     public target: Vector,
