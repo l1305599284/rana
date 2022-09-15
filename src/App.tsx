@@ -6,7 +6,7 @@ function App() {
   const [cz, setCZ] = useState(0);
   const [cx, setCX] = useState(0);
   const [n, setN] = useState(1);
-  const [f, setF] = useState(1000);
+  const [f, setF] = useState(99);
   useEffect(() => {
     const canvas = document.getElementById(
       "webgpu-canvas"

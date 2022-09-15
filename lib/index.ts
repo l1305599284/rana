@@ -9,13 +9,13 @@ import { mat4 } from "./matrix";
 import { scale, translate } from "./transform";
 import { perspectiveCamera } from "./camera";
 import { vec3, vec4 } from "./vector";
-import { triangle, ground, box, sphere } from "./meshes";
+import { box } from "./geometry";
 import { createShaderModule } from "./shaders/index";
 import { createPointLight } from "./light";
 import { initGPU, initDepthStencil, initPipline } from "./core";
 export { createEngine } from "./engine";
 export { createScene } from "./scene";
-const NUM = 3;
+const NUM = 30;
 
 export const render = async (canvas: HTMLCanvasElement) => {
   const { device, context, format } = await initGPU(canvas);
@@ -109,7 +109,7 @@ export const render = async (canvas: HTMLCanvasElement) => {
   // const ai = new Float32Array([0.1]);
   const pl = new Float32Array([0, 0, 0, 1, 5]);
   let n = 1,
-    f = 1000,
+    f = 99,
     fov = 150,
     cx = 0,
     cz = 0;
@@ -177,7 +177,7 @@ export const render = async (canvas: HTMLCanvasElement) => {
     renderPass.setBindGroup(0, mvpBindingGroup);
     renderPass.setBindGroup(1, lightGroup);
 
-    // set traingle vertex
+    // set ground vertex
     // renderPass.setVertexBuffer(0, groundBuffer.vertex);
     // renderPass.setIndexBuffer(groundBuffer.index, "uint16");
     // renderPass.drawIndexed(ground.indexCount, NUM / 2, 0, 0, 0);
@@ -188,11 +188,11 @@ export const render = async (canvas: HTMLCanvasElement) => {
     // set box vertex
     renderPass.setVertexBuffer(0, boxBuffer.vertex);
     renderPass.setIndexBuffer(boxBuffer.index, "uint16");
-    renderPass.drawIndexed(box.indexCount, NUM, 0, 0, 0);
+    renderPass.drawIndexed(box.indexCount, 2, 0, 0, 0);
     // set sphere vertex
     // renderPass.setVertexBuffer(0, sphereBuffer.vertex);
     // renderPass.setIndexBuffer(sphereBuffer.index, "uint16");
-    // renderPass.drawIndexed(sphere.indexCount, NUM, 0, 0, NUM);
+    // renderPass.drawIndexed(sphere.indexCount, 3, 0, 0, 0);
     renderPass.end();
 
     device.queue.submit([commandEncoder.finish()]);

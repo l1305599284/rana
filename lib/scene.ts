@@ -6,15 +6,39 @@ type SceneOptions = {};
 class SceneNode {
   render() {}
 }
+
 class Scene {
   camera?: Camera;
   light?: Light;
   nodes?: SceneNode[];
-  constructor(public engine: Engine, options?: SceneOptions) {}
-  if(options) {}
+  constructor(public engine: Engine, options?: SceneOptions) {
+    if (options) {
+    }
+  }
+
   render() {
     this.nodes.map((v) => v.render());
   }
+  getViewMatrix() {}
+  getProjectionMatrix() {}
+  getTransformMatrix() {}
+  createSceneUniformBuffer() {}
+  addMesh() {}
+  removeMesh() {}
+
+  addLight() {}
+  removeLight() {}
+
+  addMaterial() {}
+  removeMaterial() {}
+
+  removeTexture() {}
+  addTexture() {}
+
+  addGeometry() {}
+  removeGeometry() {}
+
+  onPointer() {}
 }
 
 export function createScene(engine: Engine, options?: SceneOptions) {

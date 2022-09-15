@@ -27,3 +27,27 @@ export function attachmentTexture(
     device
   );
 }
+
+export async function bigmap(img: RequestInfo | URL) {
+  const res = await fetch(img);
+  const imgBlob = await res.blob();
+  const bigmap = await createImageBitmap(imgBlob);
+  return bigmap;
+}
+export function linearSamplar(device: GPUDevice) {
+  return device.createSampler({
+    magFilter: "linear",
+    minFilter: "linear",
+  });
+}
+export function bitmapTexture(bitmap: ImageBitmap, device: GPUDevice) {
+  return texture(
+    [bitmap.width, bitmap.height],
+    "rgba8unorm",
+    1,
+    GPUTextureUsage.TEXTURE_BINDING |
+      GPUTextureUsage.COPY_DST |
+      GPUTextureUsage.RENDER_ATTACHMENT,
+    device
+  );
+}

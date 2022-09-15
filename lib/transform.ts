@@ -126,34 +126,32 @@ export function perspective(
   fov: number = 150,
   aspectRatio: number = 1
 ) {
-  if (n != 0) {
-    const t = Math.tan(radians(fov / 2)) * n;
-    const r = aspectRatio * t;
-    const l = -r;
-    const b = -t;
-    // 先把视锥体压缩成透视正交体
-    const frustumToOrthMat = mat4([
-      n,
-      0,
-      0,
-      0,
-      0,
-      n,
-      0,
-      0,
-      0,
-      0,
-      n + f,
-      -n * f,
-      0,
-      0,
-      1,
-      0,
-    ]);
+  const t = Math.tan(radians(fov / 2)) * n;
+  const r = aspectRatio * t;
+  const l = -r;
+  const b = -t;
+  // 先把视锥体压缩成透视正交体
+  const frustumToOrthMat = mat4([
+    n,
+    0,
+    0,
+    0,
+    0,
+    n,
+    0,
+    0,
+    0,
+    0,
+    n + f,
+    -n * f,
+    0,
+    0,
+    1,
+    0,
+  ]);
 
-    // 再用正交投影
-    const orth = orthographic(l, r, b, t, n, f);
+  // 再用正交投影
+  const orth = orthographic(l, r, b, t, n, f);
 
-    return orth.mul(frustumToOrthMat);
-  }
+  return orth.mul(frustumToOrthMat);
 }
