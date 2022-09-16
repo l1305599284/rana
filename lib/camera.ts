@@ -1,20 +1,38 @@
-import { Vector } from "./vector";
+import { vec3, Vector } from "./vector";
 import { lookAt, orthographic, perspective } from "./transform";
+import { Scene } from "./scene";
+type CameraOptions = {
+  position: Vector;
+  target: Vector;
+  up: Vector;
+};
+const defaulCameraOptions = {
+  position: vec3(0, 0, -1),
+  target: vec3(0, 0, 0),
+  up: vec3(0, 1, 0),
+};
+export abstract class Camera {
+  angularSensibility: number;
+  moveSensibility: number;
+  position: Vector;
+  target: Vector;
+  up: Vector;
+  constructor(public name: string, options: CameraOptions, scene: Scene) {
+    for (const key in options) {
+      if (Object.prototype.hasOwnProperty.call(defaulCameraOptions, key)) {
+        this[key] = options[key];
+      } else this[key] = defaulCameraOptions[key];
+    }
+    scene.addCamera(this);
+  }
 
-export class Camera {
-  constructor(
-    public position: Vector,
-    public target: Vector,
-    public up: Vector
-  ) {}
-
-  mat() {
+  view() {
     return lookAt(this.position, this.target, this.up);
   }
+
+  projection() {}
 }
-export function camera(position: Vector, target: Vector, up: Vector) {
-  return new Camera(position, target, up);
-}
+
 export function orthographicCamera(
   position: Vector,
   target: Vector,
@@ -32,6 +50,7 @@ export function orthographicCamera(
     return orthographic(l, r, b, t, n, f).mul(v.mat());
   };
 }
+
 export function perspectiveCamera(
   position: Vector,
   target: Vector,
@@ -47,3 +66,5 @@ export function perspectiveCamera(
     return perspective(n, f, fov, aspectRatio).mul(v.mat());
   };
 }
+
+export function createPerspectiveCamera() {}
