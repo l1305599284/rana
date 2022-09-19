@@ -43,7 +43,7 @@ export const initGPU = async (canvas: HTMLCanvasElement) => {
     height: canvas.height,
   };
   context.configure({ size, device, format, alphaMode: "opaque" });
-  return { gpu, canvas, adapter, device, context, format, size };
+  return { gpu, adapter, device, context, format, size };
 };
 
 export const initDepthStencil = async (

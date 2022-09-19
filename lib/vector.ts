@@ -13,18 +13,23 @@ export class Vector {
     dtype: DType = "f32"
   ) {
     if (dtype == "f32") this.data = new Float32Array([x, y, z, w]);
-    this.byteLength = this.data.byteLength;
   }
-  set(data: number[]) {
-    if (this.dtype == "f32") this.data = new Float32Array(data);
-  }
-  equils(v: Vector) {
-    let e = false;
-    if (v.byteLength == this.byteLength) {
-      if (this.data.toString() == v.data.toString()) e = true;
+    offset(){
+      return this.data.length* this.data.byteLength
     }
-    return e;
-  }
+    array(){
+      return this.data
+    }
+    set(data: number[]) {
+      if (this.dtype == "f32") this.data = new Float32Array(data);
+    }
+    equils(v: Vector) {
+      let e = false;
+      if (v.data.byteLength == this.data.byteLength) {
+        if (this.data.toString() == v.data.toString()) e = true;
+      }
+      return e;
+    }
   mul(v: Vector) {
     this.data[0] *= v.data[0];
     this.data[1] *= v.data[1];

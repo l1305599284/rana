@@ -4,7 +4,7 @@ export class Color {
   data: Float32Array;
   ndim: number = 4;
   dtype: DType = "f32";
-  byteLength: number;
+
   constructor(
     x: number,
     y: number,
@@ -13,14 +13,20 @@ export class Color {
     dtype: DType = "f32"
   ) {
     if (dtype == "f32") this.data = new Float32Array([x, y, z, w]);
-    this.byteLength = this.data.byteLength;
+   
+  }
+  offset(){
+    return this.data.length* this.data.byteLength
+  }
+  array(){
+    return this.data
   }
   set(data: number[]) {
     if (this.dtype == "f32") this.data = new Float32Array(data);
   }
   equils(v: Color) {
     let e = false;
-    if (v.byteLength == this.byteLength) {
+    if (v.data.byteLength == this.data.byteLength) {
       if (this.data.toString() == v.data.toString()) e = true;
     }
     return e;

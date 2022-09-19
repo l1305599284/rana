@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { render, createEngine, createScene } from "../lib";
+import { createPerspectiveCamera } from "../lib/camera";
 import { createPointLight } from "../lib/light";
 import { vec3 } from "../lib/vector";
+import {createBox} from '../lib/meshes'
 const NUM = 3;
 function App() {
   const [fov, setFov] = useState("150");
@@ -26,7 +28,10 @@ function App() {
       { position: lightPosition },
       scene
     );
-    const camera = createPerspectiveCamera("c1", {}, scene);
+    const camera = createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
+
+    const box = createBox('b1',scene)
+    
     engine.loop(() => {
       scene.render();
     });

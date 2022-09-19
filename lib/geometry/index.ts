@@ -5,7 +5,7 @@ export * as box from "./box";
 export class Geometry {
   constructor(
     public vertex: FloatArray,
-    public indices: IndicesArray,
+    public index: IndicesArray,
     public vertexCount: int,
     public indexCount: int
   ) {}
