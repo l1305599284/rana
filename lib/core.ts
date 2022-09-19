@@ -37,8 +37,13 @@ export const initGPU = async (canvas: HTMLCanvasElement) => {
     console.error("webgpu is not supported.");
   }
   const format = gpu.getPreferredCanvasFormat();
-
-  context.configure({ device, format, alphaMode: "opaque" });
+  const canvasConfig: GPUCanvasConfiguration = {
+    device,
+    format,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    alphaMode: "opaque",
+  };
+  context.configure(canvasConfig);
   return { gpu, adapter, device, context, format };
 };
 
