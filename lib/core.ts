@@ -52,15 +52,18 @@ export const initDepthStencil = async (
   canvas: HTMLCanvasElement
 ) => {
   const depthFormat = <GPUTextureFormat>"depth24plus-stencil8";
-  const depthTexture = device.createTexture({
+  const depthTextureDesc: GPUTextureDescriptor = {
     size: {
       width: canvas.width,
       height: canvas.height,
+      depthOrArrayLayers: 1,
     },
-
+    dimension: "2d",
     format: depthFormat,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT,
-  });
+    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+  };
+
+  const depthTexture = device.createTexture(depthTextureDesc);
   return { depthFormat, depthTexture };
 };
 

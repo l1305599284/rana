@@ -15,7 +15,7 @@ export class Engine {
   depthTexture: GPUTexture;
   queue: GPUQueue;
   depthFormat: GPUTextureFormat;
-  constructor(private canvas: HTMLCanvasElement, options?: EngineOptions) {}
+  constructor(public canvas: HTMLCanvasElement, options?: EngineOptions) {}
   createDefaultScene() {
     const scene = createScene(this);
     this.addScene(scene);

@@ -43,11 +43,13 @@ export class Scene {
   }
 
   async init() {
-    const { queue, device, format, depthFormat } = this.engine;
+    const { context, queue, device, format, depthFormat } = this.engine;
 
     const { pipeline } = await initPipline(device, format, {
       depthFormat,
     });
+    this.pipeline = pipeline;
+
     this.meshBuffers = this.meshes.map((v) => ({
       vertex: createVertexBuffer(
         v.name + " vertex",
@@ -114,45 +116,45 @@ export class Scene {
     let projection = this.viewProjectionMatrix.array();
 
     queue.writeBuffer(this.projectionBuffer, 0, projection);
-    this.pipeline = pipeline;
   }
   render() {
     // write datas to buffers
-    const { queue, device, context, depthTexture } = this.engine;
+    const { canvas, queue, device, context, depthTexture } = this.engine;
+    const colorAttachment: GPURenderPassColorAttachment = {
+      view: context.getCurrentTexture().createView(),
+      clearValue: { r: 0, g: 0, b: 0, a: 1 },
+      loadOp: "clear",
+      storeOp: "store",
+    };
+
+    const depthAttachment: GPURenderPassDepthStencilAttachment = {
+      view: depthTexture.createView(),
+      depthClearValue: 1,
+      depthLoadOp: "clear",
+      depthStoreOp: "store",
+      stencilClearValue: 0,
+      stencilLoadOp: "clear",
+      stencilStoreOp: "store",
+    };
+    const renderPassDesc: GPURenderPassDescriptor = {
+      colorAttachments: [colorAttachment],
+      depthStencilAttachment: depthAttachment,
+    };
 
     const commandEncoder = device.createCommandEncoder();
-    const renderPass = commandEncoder.beginRenderPass({
-      colorAttachments: [
-        {
-          view: context.getCurrentTexture().createView(),
-          clearValue: { r: 0, g: 0, b: 0, a: 1 },
-          loadOp: "clear",
-          storeOp: "store",
-        },
-      ],
-      depthStencilAttachment: {
-        view: depthTexture.createView(),
-        depthClearValue: 1,
-        depthLoadOp: "clear",
-        depthStoreOp: "store",
-        stencilClearValue: 0,
-        stencilLoadOp: "clear",
-        stencilStoreOp: "store",
-      },
-    });
+    const passEncoder = commandEncoder.beginRenderPass(renderPassDesc);
 
-    renderPass.setPipeline(this.pipeline);
-
+    passEncoder.setPipeline(this.pipeline);
     // setBindGroups
-    renderPass.setBindGroup(0, this.mvpBindingGroup);
-    renderPass.setBindGroup(1, this.lightBindingGroup);
+    passEncoder.setBindGroup(0, this.mvpBindingGroup);
+    passEncoder.setBindGroup(1, this.lightBindingGroup);
     this.meshBuffers.map((buffer, i) => {
-      renderPass.setVertexBuffer(0, buffer.vertex);
-      renderPass.setIndexBuffer(buffer.index, "uint16");
-      renderPass.drawIndexed(this.meshes[i].getmetry.indexCount, 1, 0, 0, 0);
+      passEncoder.setVertexBuffer(0, buffer.vertex);
+      passEncoder.setIndexBuffer(buffer.index, "uint16");
+      passEncoder.drawIndexed(this.meshes[i].getmetry.indexCount, 1, 0, 0, 0);
     });
 
-    renderPass.end();
+    passEncoder.end();
 
     queue.submit([commandEncoder.finish()]);
   }
