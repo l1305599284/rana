@@ -36,13 +36,10 @@ export const initGPU = async (canvas: HTMLCanvasElement) => {
   if (!context) {
     console.error("webgpu is not supported.");
   }
-  const format = gpu?.getPreferredCanvasFormat();
-  const size = {
-    width: canvas.width,
-    height: canvas.height,
-  };
-  context.configure({ size, device, format, alphaMode: "opaque" });
-  return { gpu, adapter, device, context, format, size };
+  const format = gpu.getPreferredCanvasFormat();
+
+  context.configure({ device, format, alphaMode: "opaque" });
+  return { gpu, adapter, device, context, format };
 };
 
 export const initDepthStencil = async (

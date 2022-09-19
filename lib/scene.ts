@@ -43,7 +43,7 @@ export class Scene {
   }
 
   async init() {
-    const { device, format, depthFormat } = this.engine;
+    const { queue, device, format, depthFormat } = this.engine;
 
     const { pipeline } = await initPipline(device, format, {
       depthFormat,
@@ -63,13 +63,13 @@ export class Scene {
 
     this.transformBuffer = createStorageBuffer(
       "modelBuffer",
-      4 * 4 * 4 * this.getMeshesCount(),
+      16 * 4 * this.getMeshesCount(),
       device
     );
 
     this.projectionBuffer = createUniformBuffer(
       "projectionBuffer",
-      4 * 4 * 4,
+      16 * 4,
       device
     );
 
@@ -95,38 +95,32 @@ export class Scene {
     );
 
     this.viewProjectionMatrix = this.camera.getViewProjectionMatrix();
-    this.transforms = new Float32Array(this.getMeshesCount() * 4 * 4);
+    this.transforms = new Float32Array(this.getMeshesCount() * 16);
     this.colors = new Float32Array(this.getMeshesCount() * 4);
 
     this.meshes.map((mesh, i) => {
-      console.log(i, mesh.transform.offset());
-      console.log(i, mesh.color.offset());
-      this.transforms.set(mesh.transform.array(), i * mesh.transform.offset());
-      this.colors.set(mesh.color.array(), i * mesh.color.offset());
+      this.transforms.set(mesh.transform.array(), i * 16);
+      this.colors.set(mesh.color.array(), i * 4);
+    });
+    const pl = new Float32Array([0, 0, 0, 1, 5]);
+    queue.writeBuffer(this.transformBuffer, 0, this.transforms);
+    queue.writeBuffer(this.colorBuffer, 0, this.colors);
+    queue.writeBuffer(this.lightBuffer, 0, pl);
+    this.meshBuffers.map((buffer, i) => {
+      queue.writeBuffer(buffer.vertex, i, this.meshes[i].getmetry.vertex);
+      queue.writeBuffer(buffer.index, i, this.meshes[i].getmetry.index);
     });
 
+    let projection = this.viewProjectionMatrix.array();
+
+    queue.writeBuffer(this.projectionBuffer, 0, projection);
     this.pipeline = pipeline;
   }
   render() {
     // write datas to buffers
     const { queue, device, context, depthTexture } = this.engine;
 
-    const pl = new Float32Array([0, 0, 0, 1, 5]);
-    this.meshBuffers.map((buffer, i) => {
-      queue.writeBuffer(buffer.vertex, i, this.meshes[i].getmetry.vertex);
-      queue.writeBuffer(buffer.index, i, this.meshes[i].getmetry.index);
-    });
-
-    queue.writeBuffer(this.transformBuffer, 0, this.transforms);
-    queue.writeBuffer(this.colorBuffer, 0, this.colors);
-    queue.writeBuffer(this.lightBuffer, 0, pl);
-
-    let projection = this.viewProjectionMatrix.array();
-
-    queue.writeBuffer(this.projectionBuffer, 0, projection);
-
     const commandEncoder = device.createCommandEncoder();
-
     const renderPass = commandEncoder.beginRenderPass({
       colorAttachments: [
         {
