@@ -1,9 +1,5 @@
-import { createBindingGroup, createIndexBuffer, createStorageBuffer, createUniformBuffer, createVertexBuffer } from "./buffer";
-import { initDepthStencil, initGPU, initPipline } from "./core";
+import { initDepthStencil, initGPU } from "./core";
 import { createScene, Scene } from "./scene";
-import { translate } from "./transform";
-
-
 
 type EngineOptions = Partial<{
   antialias: boolean;
@@ -19,16 +15,13 @@ export class Engine {
   depthTexture: GPUTexture;
   queue: GPUQueue;
   depthFormat: GPUTextureFormat;
-  constructor(private canvas: HTMLCanvasElement, options?: EngineOptions) {
-    this.init()
-  }
+  constructor(private canvas: HTMLCanvasElement, options?: EngineOptions) {}
   createDefaultScene() {
-    
     const scene = createScene(this);
     this.addScene(scene);
     return scene;
   }
-  
+
   addScene(scene: Scene) {
     this.scene = scene;
   }
@@ -37,22 +30,24 @@ export class Engine {
     const { gpu, adapter, device, context, format } = await initGPU(
       this.canvas
     );
-    this.device = device
-    this.queue = device.queue
-    this.context = context
-    this.format = format
+
+    this.device = device;
+    this.queue = device.queue;
+    this.context = context;
+    this.format = format;
     const { depthFormat, depthTexture } = await initDepthStencil(
-        this.device,
-        this.canvas
-      );  
-      this.depthFormat = depthFormat
-      this.depthTexture = depthTexture
+      this.device,
+      this.canvas
+    );
+    this.depthFormat = depthFormat;
+    this.depthTexture = depthTexture;
   }
 
-   loop(renderFunction: () => void) {
+  loop(renderFunction: () => void) {
     (async () => {
-      await this.scene.init()
-    
+      await this.init();
+      await this.scene.init();
+
       const realRenderFunction = function () {
         renderFunction();
         requestAnimationFrame(renderFunction);

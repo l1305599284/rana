@@ -73,6 +73,7 @@ export function reflect(x?: boolean, y?: boolean, z?: boolean) {
 export function lookAt(position: Vector, target: Vector, up: Vector) {
   // 相当于物体相对于相机相对于原点的运动
   // 先平移相机到原点
+
   const tv = translate(-position.data[0], -position.data[1], -position.data[2]);
 
   // 再旋转相机坐标系到原坐标系

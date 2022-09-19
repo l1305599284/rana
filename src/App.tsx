@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { render, createEngine, createScene } from "../lib";
+import { createEngine, createScene } from "../lib";
 import { createPerspectiveCamera } from "../lib/camera";
 import { createPointLight } from "../lib/light";
 import { vec3 } from "../lib/vector";
-import {createBox} from '../lib/meshes'
-const NUM = 3;
+import { createBox } from "../lib/meshes";
+
 function App() {
   const [fov, setFov] = useState("150");
   const [cz, setCZ] = useState(0);
@@ -19,7 +19,7 @@ function App() {
     if (!canvas) {
       console.error("canvas is not exist.");
     }
-    // render(canvas);
+
     const engine = createEngine(canvas);
     const scene = createScene(engine);
     const lightPosition = vec3(0, 1, 0);
@@ -28,10 +28,14 @@ function App() {
       { position: lightPosition },
       scene
     );
-    const camera = createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
+    const camera = createPerspectiveCamera(
+      "c1",
+      { target: vec3(0, 0, 1) },
+      scene
+    );
 
-    const box = createBox('b1',scene)
-    
+    const box = createBox("b1", scene);
+
     engine.loop(() => {
       scene.render();
     });

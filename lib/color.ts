@@ -13,13 +13,12 @@ export class Color {
     dtype: DType = "f32"
   ) {
     if (dtype == "f32") this.data = new Float32Array([x, y, z, w]);
-   
   }
-  offset(){
-    return this.data.length* this.data.byteLength
+  offset() {
+    return this.data.byteLength;
   }
-  array(){
-    return this.data
+  array() {
+    return this.data;
   }
   set(data: number[]) {
     if (this.dtype == "f32") this.data = new Float32Array(data);

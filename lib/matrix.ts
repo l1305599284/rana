@@ -16,8 +16,8 @@ export class Matrix {
     this.byteLength = this.data.byteLength;
     this.size = this.data.length;
   }
-  offset(){
-    return this.size * this.byteLength
+  offset() {
+    return this.data.byteLength;
   }
   array() {
     return this.data;

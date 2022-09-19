@@ -1,6 +1,6 @@
 import { FloatArray, IndicesArray, int } from "../types";
 
-export * as box from "./box";
+import * as box from "./box";
 
 export class Geometry {
   constructor(
@@ -9,4 +9,7 @@ export class Geometry {
     public vertexCount: int,
     public indexCount: int
   ) {}
+}
+export function createBoxGeometry() {
+  return new Geometry(box.vertex, box.index, box.vertexCount, box.indexCount);
 }

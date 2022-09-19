@@ -1,23 +1,29 @@
-import { createBindingGroup, createIndexBuffer, createStorageBuffer, createUniformBuffer, createVertexBuffer } from "./buffer";
+import {
+  createBindingGroup,
+  createIndexBuffer,
+  createStorageBuffer,
+  createUniformBuffer,
+  createVertexBuffer,
+} from "./buffer";
 import { Camera } from "./camera";
 import { initPipline } from "./core";
 import { Engine } from "./engine";
 import { Light } from "./light";
+import { Matrix } from "./matrix";
 import { Mesh } from "./meshes/mesh";
 type MeshBuffer = {
-  vertex: GPUBuffer,
-  index:GPUBuffer
-}
+  vertex: GPUBuffer;
+  index: GPUBuffer;
+};
 type SceneOptions = {};
-
 
 export class Scene {
   camera?: Camera;
   light?: Light;
   meshes?: Mesh[];
   pipeline: GPURenderPipeline;
-  mvpBindingGroup:GPUBindGroup
-  lightBindingGroup:GPUBindGroup
+  mvpBindingGroup: GPUBindGroup;
+  lightBindingGroup: GPUBindGroup;
   transforms: Float32Array;
   colors: Float32Array;
   lightBuffer: GPUBuffer;
@@ -25,27 +31,35 @@ export class Scene {
   transformBuffer: GPUBuffer;
   projectionBuffer: GPUBuffer;
   colorBuffer: GPUBuffer;
-  viewProjectionMatrix: import("j:/rana/lib/matrix").Matrix;
+  viewProjectionMatrix: Matrix;
   constructor(public engine: Engine, options?: SceneOptions) {
     engine.addScene(this);
     if (options) {
     }
   }
 
-  getMeshesCount(){
-    return this.meshes.length
+  getMeshesCount() {
+    return this.meshes.length;
   }
 
-  async init(){
- 
-    const { device,format,depthFormat } = this.engine
+  async init() {
+    const { device, format, depthFormat } = this.engine;
+
     const { pipeline } = await initPipline(device, format, {
       depthFormat,
     });
-    this.meshBuffers = this.meshes.map(v=>({
-      vertex: createVertexBuffer(v.name+" vertex", v.getmetry.vertex.byteLength, device),
-      index: createIndexBuffer(v.name+"box index", v.getmetry.index.byteLength, device),
-    }))
+    this.meshBuffers = this.meshes.map((v) => ({
+      vertex: createVertexBuffer(
+        v.name + " vertex",
+        v.getmetry.vertex.byteLength,
+        device
+      ),
+      index: createIndexBuffer(
+        v.name + "box index",
+        v.getmetry.index.byteLength,
+        device
+      ),
+    }));
 
     this.transformBuffer = createStorageBuffer(
       "modelBuffer",
@@ -53,18 +67,18 @@ export class Scene {
       device
     );
 
-    this. projectionBuffer = createUniformBuffer(
+    this.projectionBuffer = createUniformBuffer(
       "projectionBuffer",
       4 * 4 * 4,
       device
     );
 
-    this. colorBuffer = createStorageBuffer(
+    this.colorBuffer = createStorageBuffer(
       "colorBuffer",
       4 * 4 * this.getMeshesCount(),
       device
     );
-   
+
     this.mvpBindingGroup = createBindingGroup(
       "mvpBindingGroup",
       [this.transformBuffer, this.projectionBuffer, this.colorBuffer],
@@ -80,32 +94,31 @@ export class Scene {
       device
     );
 
-    this.viewProjectionMatrix = this.camera.getViewProjectionMatrix()
+    this.viewProjectionMatrix = this.camera.getViewProjectionMatrix();
     this.transforms = new Float32Array(this.getMeshesCount() * 4 * 4);
     this.colors = new Float32Array(this.getMeshesCount() * 4);
 
-     this.meshes.map((mesh,i)=>{
-      this.transforms.set(mesh.transform.array(),i*mesh.transform.offset())
-      this.colors.set([...mesh.color.array(), 1], i * 4)
-     })
+    this.meshes.map((mesh, i) => {
+      console.log(i, mesh.transform.offset());
+      console.log(i, mesh.color.offset());
+      this.transforms.set(mesh.transform.array(), i * mesh.transform.offset());
+      this.colors.set(mesh.color.array(), i * mesh.color.offset());
+    });
 
-  
-
-    this.pipeline = pipeline
+    this.pipeline = pipeline;
   }
   render() {
-
     // write datas to buffers
-    const {queue,device,context,depthTexture} = this.engine
+    const { queue, device, context, depthTexture } = this.engine;
 
     const pl = new Float32Array([0, 0, 0, 1, 5]);
-    this.meshBuffers.map((buffer,i)=>{
+    this.meshBuffers.map((buffer, i) => {
       queue.writeBuffer(buffer.vertex, i, this.meshes[i].getmetry.vertex);
       queue.writeBuffer(buffer.index, i, this.meshes[i].getmetry.index);
-    })
-  
+    });
+
     queue.writeBuffer(this.transformBuffer, 0, this.transforms);
-      queue.writeBuffer(this.colorBuffer, 0, this.colors);
+    queue.writeBuffer(this.colorBuffer, 0, this.colors);
     queue.writeBuffer(this.lightBuffer, 0, pl);
 
     let projection = this.viewProjectionMatrix.array();
@@ -136,24 +149,26 @@ export class Scene {
 
     renderPass.setPipeline(this.pipeline);
 
-
     // setBindGroups
     renderPass.setBindGroup(0, this.mvpBindingGroup);
     renderPass.setBindGroup(1, this.lightBindingGroup);
-    this.meshBuffers.map((buffer,i)=>{
+    this.meshBuffers.map((buffer, i) => {
       renderPass.setVertexBuffer(0, buffer.vertex);
       renderPass.setIndexBuffer(buffer.index, "uint16");
       renderPass.drawIndexed(this.meshes[i].getmetry.indexCount, 1, 0, 0, 0);
-    })
- 
+    });
+
     renderPass.end();
 
     queue.submit([commandEncoder.finish()]);
   }
 
   createSceneUniformBuffer() {}
-  addMesh(mesh:Mesh) {
-    this.meshes.push(mesh)
+  addMesh(mesh: Mesh) {
+    if (!(this.meshes instanceof Array)) {
+      this.meshes = [];
+    }
+    this.meshes.push(mesh);
   }
   removeMesh() {}
 
@@ -161,8 +176,6 @@ export class Scene {
     this.light = light;
   }
 
-
- 
   addCamera(camera: Camera) {
     this.camera = camera;
   }
@@ -181,5 +194,6 @@ export class Scene {
 }
 
 export function createScene(engine: Engine, options?: SceneOptions) {
-  return new Scene(engine, options);
+  const scene = new Scene(engine, options);
+  return scene;
 }
