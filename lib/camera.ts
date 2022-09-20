@@ -27,8 +27,8 @@ type PerspectiveCameraOptions = CameraOptions &
     aspectRatio: number;
   }>;
 const defaulCameraOptions = {
-  position: vec3(0, 0, -1),
-  target: vec3(0, 0, 0),
+  position: vec3(0, 0, 0),
+  target: vec3(0, 0, 1),
   up: vec3(0, 1, 0),
 };
 const defaulOrthographicCameraOptions = {
@@ -42,8 +42,8 @@ const defaulOrthographicCameraOptions = {
 };
 const defaulPerspectiveCameraOptions = {
   ...defaulCameraOptions,
-  n: 0,
-  f: 5,
+  n: 1,
+  f: 1000,
   fov: 150,
   aspectRatio: 1,
 };

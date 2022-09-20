@@ -11,7 +11,7 @@ export class Mesh {
   getmetry: Geometry;
   color: Color;
   constructor(public name: string, scene: Scene) {
-    this.transform = translate(0, 0, 2);
+    this.transform = translate(Math.random() * 5 - 2, Math.random() * 5 - 2, 2);
     this.color = color4(Math.random(), Math.random(), Math.random(), 1);
 
     scene.addMesh(this);

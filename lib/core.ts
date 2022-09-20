@@ -37,13 +37,11 @@ export const initGPU = async (canvas: HTMLCanvasElement) => {
     console.error("webgpu is not supported.");
   }
   const format = gpu.getPreferredCanvasFormat();
-  const canvasConfig: GPUCanvasConfiguration = {
+  context.configure({
     device,
     format,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
     alphaMode: "opaque",
-  };
-  context.configure(canvasConfig);
+  });
   return { gpu, adapter, device, context, format };
 };
 
@@ -56,11 +54,9 @@ export const initDepthStencil = async (
     size: {
       width: canvas.width,
       height: canvas.height,
-      depthOrArrayLayers: 1,
     },
-    dimension: "2d",
     format: depthFormat,
-    usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.COPY_SRC,
+    usage: GPUTextureUsage.RENDER_ATTACHMENT,
   };
 
   const depthTexture = device.createTexture(depthTextureDesc);

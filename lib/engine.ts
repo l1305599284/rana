@@ -43,17 +43,14 @@ export class Engine {
     this.depthTexture = depthTexture;
   }
 
-  loop(renderFunction: () => void) {
-    (async () => {
-      await this.init();
-      await this.scene.init();
-
-      const realRenderFunction = function () {
-        renderFunction();
-        requestAnimationFrame(renderFunction);
-      };
-      requestAnimationFrame(realRenderFunction);
-    })();
+  async loop(renderFunction: () => void) {
+    await this.init();
+    await this.scene.init();
+    const realRenderFunction = () => {
+      renderFunction();
+      requestAnimationFrame(renderFunction);
+    };
+    requestAnimationFrame(realRenderFunction);
   }
 }
 

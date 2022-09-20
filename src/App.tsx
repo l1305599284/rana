@@ -4,6 +4,7 @@ import { createPerspectiveCamera } from "../lib/camera";
 import { createPointLight } from "../lib/light";
 import { vec3 } from "../lib/vector";
 import { createBox } from "../lib/meshes";
+import { memo } from "react";
 
 function App() {
   const [fov, setFov] = useState("150");
@@ -12,33 +13,35 @@ function App() {
   const [n, setN] = useState(1);
   const [f, setF] = useState(99);
   useEffect(() => {
-    const canvas = document.getElementById(
-      "webgpu-canvas"
-    ) as HTMLCanvasElement;
+    (async () => {
+      const canvas = document.getElementById(
+        "webgpu-canvas"
+      ) as HTMLCanvasElement;
 
-    if (!canvas) {
-      console.error("canvas is not exist.");
-    }
+      if (!canvas) {
+        console.error("canvas is not exist.");
+      }
 
-    const engine = createEngine(canvas);
-    const scene = createScene(engine);
-    const lightPosition = vec3(0, 1, 0);
-    const light = createPointLight(
-      "light1",
-      { position: lightPosition },
-      scene
-    );
-    const camera = createPerspectiveCamera(
-      "c1",
-      { target: vec3(0, 0, 1) },
-      scene
-    );
+      const engine = createEngine(canvas);
+      const scene = createScene(engine);
+      const lightPosition = vec3(0, 1, 0);
+      const light = createPointLight(
+        "light1",
+        { position: lightPosition },
+        scene
+      );
+      const camera = createPerspectiveCamera(
+        "c1",
+        { target: vec3(0, 0, 1) },
+        scene
+      );
 
-    const box = createBox("b1", scene);
+      const box = createBox("b1", scene);
 
-    engine.loop(() => {
-      scene.render();
-    });
+      await engine.loop(() => {
+        scene.render();
+      });
+    })();
   }, []);
   return (
     <>
@@ -52,8 +55,8 @@ function App() {
       >
         <canvas
           id="webgpu-canvas"
-          width="512"
-          height="512
+          width="96"
+          height="96
         ."
         ></canvas>
       </div>
@@ -159,4 +162,4 @@ function App() {
   );
 }
 
-export default App;
+export default memo(App);
