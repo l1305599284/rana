@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import {createBox, createSphere,vec3,createEngine, createScene,createPerspectiveCamera,createPointLight } from "../lib";
+import {
+  createBox,
+  createSphere,
+  vec3,
+  createEngine,
+  createScene,
+  createPerspectiveCamera,
+  createPointLight,
+} from "../lib";
 
 import { memo } from "react";
 
@@ -21,22 +29,11 @@ function App() {
 
       const engine = createEngine(canvas);
       const scene = createScene(engine);
-      createPointLight(
-        "light1",
-        { position: vec3(0, 1, 0) },
-        scene
-      );
-      createPerspectiveCamera(
-        "c1",
-        { target: vec3(0, 0, 1) },
-        scene
-      );
-          createSphere('s1',scene)
+      createPointLight("light1", { position: vec3(0, 1, 0) }, scene);
+      createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
+
       createBox("b1", scene);
-      createBox("b2", scene);
-      createBox("b3", scene);
-      createBox("b4", scene);
-      createBox("b5", scene);
+      createSphere("s1", scene);
 
       await engine.loop(() => {
         scene.render();

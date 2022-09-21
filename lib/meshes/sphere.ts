@@ -2,11 +2,8 @@ import { createSphereGeometry } from "../geometry/index";
 import { Scene } from "../scene";
 import { translate } from "../transform";
 import { int } from "../types";
-import { Mesh } from "./index";
-type SphereOptions = {
-  width: int;
-  height: int;
-};
+import { Mesh } from "./mesh";
+type SphereOptions = {};
 
 const defaulSphereOptions = {};
 class SphereMesh extends Mesh {

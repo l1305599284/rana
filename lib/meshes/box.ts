@@ -1,7 +1,7 @@
 import { createBoxGeometry } from "../geometry/index";
 import { Scene } from "../scene";
 import { int } from "../types";
-import { Mesh } from "./index";
+import { Mesh } from "./mesh";
 type BoxOptions = {
   width: int;
   height: int;

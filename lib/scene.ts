@@ -10,7 +10,7 @@ import { initPipline } from "./core";
 import { Engine } from "./engine";
 import { Light } from "./light";
 import { Matrix } from "./matrix";
-import { Mesh } from "./meshes";
+import { Mesh } from "./meshes/mesh";
 import { translate } from "./transform";
 type MeshBuffer = {
   vertex: GPUBuffer;
@@ -58,7 +58,6 @@ export class Scene {
         device
       ),
     }));
-    console.log(this.meshBuffers);
 
     this.transformBuffer = createStorageBuffer(
       "modelBuffer",
@@ -114,10 +113,13 @@ export class Scene {
 
     queue.writeBuffer(this.transformBuffer, 0, this.transforms);
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
+
     this.meshBuffers.map((buffer, i) => {
-      queue.writeBuffer(buffer.vertex, 0, this.meshes[i].geometry.vertex);
-      queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
+      console.log(this.meshes[i].geometry);
+      queue.writeBuffer(buffer.vertex, 0, this.meshes[0].geometry.vertex);
+      queue.writeBuffer(buffer.index, 0, this.meshes[0].geometry.index);
     });
+
     queue.writeBuffer(this.lightBuffer, 0, pl);
     queue.writeBuffer(
       this.projectionBuffer,
@@ -166,7 +168,7 @@ export class Scene {
       passEncoder.setIndexBuffer(buffer.index, "uint16");
       passEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, 0);
     });
-    debugger;
+
     passEncoder.end();
 
     queue.submit([commandEncoder.finish()]);
