@@ -104,10 +104,7 @@ export class Scene {
     this.colors = new Float32Array(this.getMeshesCount() * 4);
 
     this.meshes.map((mesh, i) => {
-      this.transforms.set(
-        translate(Math.random() * 5 - 2, Math.random() * 5 - 2, 2).array(),
-        i * 16
-      );
+      this.transforms.set(mesh.transform.array(), i * 16);
       this.colors.set(mesh.color.array(), i * 4);
     });
 
@@ -115,9 +112,8 @@ export class Scene {
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
 
     this.meshBuffers.map((buffer, i) => {
-      console.log(this.meshes[i].geometry);
-      queue.writeBuffer(buffer.vertex, 0, this.meshes[0].geometry.vertex);
-      queue.writeBuffer(buffer.index, 0, this.meshes[0].geometry.index);
+      queue.writeBuffer(buffer.vertex, 0, this.meshes[i].geometry.vertex);
+      queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
     });
 
     queue.writeBuffer(this.lightBuffer, 0, pl);
@@ -165,6 +161,7 @@ export class Scene {
 
     this.meshBuffers.map((buffer, i) => {
       passEncoder.setVertexBuffer(0, buffer.vertex);
+
       passEncoder.setIndexBuffer(buffer.index, "uint16");
       passEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, 0);
     });

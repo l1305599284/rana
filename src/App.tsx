@@ -32,7 +32,7 @@ function App() {
       createPointLight("light1", { position: vec3(0, 1, 0) }, scene);
       createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
 
-      createBox("b1", scene);
+      // createBox("b1", scene);
       createSphere("s1", scene);
 
       await engine.loop(() => {

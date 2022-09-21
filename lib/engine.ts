@@ -8,7 +8,6 @@ type EngineOptions = Partial<{
 }>;
 
 export class Engine {
-  
   scene: Scene;
   device: GPUDevice;
   context: GPUCanvasContext;
@@ -18,7 +17,7 @@ export class Engine {
   depthFormat: GPUTextureFormat;
 
   constructor(public canvas: HTMLCanvasElement, options?: EngineOptions) {}
-  
+
   createDefaultScene() {
     const scene = createScene(this);
     this.addScene(scene);
@@ -30,14 +29,12 @@ export class Engine {
   }
 
   async init() {
-    const { device, context, format } = await initGPU(
-      this.canvas
-    );
+    const { device, context, format } = await initGPU(this.canvas);
     const { depthFormat, depthTexture } = await initDepthStencil(
       device,
       this.canvas
     );
-  
+
     this.device = device;
     this.queue = device.queue;
     this.context = context;
@@ -47,10 +44,10 @@ export class Engine {
   }
 
   async loop(renderFunction: () => void) {
-    function realRenderFunction () {
+    function realRenderFunction() {
       renderFunction();
-      requestAnimationFrame(realRenderFunction);
-    };
+      // requestAnimationFrame(realRenderFunction);
+    }
 
     await this.init();
     await this.scene.init();
