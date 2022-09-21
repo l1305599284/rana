@@ -10,7 +10,7 @@ import { initPipline } from "./core";
 import { Engine } from "./engine";
 import { Light } from "./light";
 import { Matrix } from "./matrix";
-import { Mesh } from "./meshes/mesh";
+import { Mesh } from "./meshes";
 import { translate } from "./transform";
 type MeshBuffer = {
   vertex: GPUBuffer;
@@ -21,7 +21,7 @@ const pl = new Float32Array([0, 0, 0, 1, 5]);
 export class Scene {
   camera?: Camera;
   light?: Light;
-  meshes?: Mesh[]=[];
+  meshes?: Mesh[] = [];
   pipeline: GPURenderPipeline;
   mvpBindingGroup: GPUBindGroup;
   lightBindingGroup: GPUBindGroup;
@@ -59,9 +59,7 @@ export class Scene {
       ),
     }));
     console.log(this.meshBuffers);
-    
-    
-    
+
     this.transformBuffer = createStorageBuffer(
       "modelBuffer",
       16 * 4 * this.getMeshesCount(),
@@ -74,7 +72,6 @@ export class Scene {
       device
     );
 
-      
     this.colorBuffer = createStorageBuffer(
       "colorBuffer",
       4 * 4 * this.getMeshesCount(),
@@ -108,18 +105,18 @@ export class Scene {
     this.colors = new Float32Array(this.getMeshesCount() * 4);
 
     this.meshes.map((mesh, i) => {
-      this.transforms.set(translate(Math.random() * 5 - 2, Math.random() * 5 - 2, 2).array(), i * 16);
+      this.transforms.set(
+        translate(Math.random() * 5 - 2, Math.random() * 5 - 2, 2).array(),
+        i * 16
+      );
       this.colors.set(mesh.color.array(), i * 4);
-    }); 
-    
+    });
+
     queue.writeBuffer(this.transformBuffer, 0, this.transforms);
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
     this.meshBuffers.map((buffer, i) => {
-
-        queue.writeBuffer(buffer.vertex, 0,  this.meshes[i].geometry.vertex);
+      queue.writeBuffer(buffer.vertex, 0, this.meshes[i].geometry.vertex);
       queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
- 
-      
     });
     queue.writeBuffer(this.lightBuffer, 0, pl);
     queue.writeBuffer(
@@ -131,7 +128,6 @@ export class Scene {
   render() {
     // write datas to buffers
     const { queue, device, context, depthTexture } = this.engine;
-    
 
     const commandEncoder = device.createCommandEncoder();
 
@@ -160,7 +156,7 @@ export class Scene {
     const passEncoder = commandEncoder.beginRenderPass(renderPassDesc);
 
     passEncoder.setPipeline(this.pipeline);
- 
+
     // setBindGroups
     passEncoder.setBindGroup(0, this.mvpBindingGroup);
     passEncoder.setBindGroup(1, this.lightBindingGroup);
@@ -170,7 +166,7 @@ export class Scene {
       passEncoder.setIndexBuffer(buffer.index, "uint16");
       passEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, 0);
     });
-debugger
+    debugger;
     passEncoder.end();
 
     queue.submit([commandEncoder.finish()]);
@@ -178,7 +174,6 @@ debugger
 
   createSceneUniformBuffer() {}
   addMesh(mesh: Mesh) {
-
     this.meshes.push(mesh);
   }
   removeMesh() {}
