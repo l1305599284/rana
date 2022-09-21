@@ -1,7 +1,7 @@
 import { createBoxGeometry } from "../geometry/index";
 import { Scene } from "../scene";
 import { int } from "../types";
-import { Mesh } from "./mesh";
+import { Mesh } from "./index";
 type BoxOptions = {
   width: int;
   height: int;
@@ -16,7 +16,7 @@ class BoxMesh extends Mesh {
   height: int;
   constructor(name: string, scene: Scene, options?: BoxOptions) {
     super(name, scene);
-    this.getmetry = createBoxGeometry();
+    this.geometry = createBoxGeometry();
     for (const key in options) {
       if (Object.prototype.hasOwnProperty.call(defaulBoxOptions, key)) {
         this[key] = options[key];

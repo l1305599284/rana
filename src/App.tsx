@@ -1,9 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { createEngine, createScene } from "../lib";
-import { createPerspectiveCamera } from "../lib/camera";
-import { createPointLight } from "../lib/light";
-import { vec3 } from "../lib/vector";
-import { createBox } from "../lib/meshes";
+import {createBox, createSphere,vec3,createEngine, createScene,createPerspectiveCamera,createPointLight } from "../lib";
+
 import { memo } from "react";
 
 function App() {
@@ -24,19 +21,22 @@ function App() {
 
       const engine = createEngine(canvas);
       const scene = createScene(engine);
-      const lightPosition = vec3(0, 1, 0);
-      const light = createPointLight(
+      createPointLight(
         "light1",
-        { position: lightPosition },
+        { position: vec3(0, 1, 0) },
         scene
       );
-      const camera = createPerspectiveCamera(
+      createPerspectiveCamera(
         "c1",
         { target: vec3(0, 0, 1) },
         scene
       );
-
-      const box = createBox("b1", scene);
+          createSphere('s1',scene)
+      createBox("b1", scene);
+      createBox("b2", scene);
+      createBox("b3", scene);
+      createBox("b4", scene);
+      createBox("b5", scene);
 
       await engine.loop(() => {
         scene.render();
@@ -55,8 +55,8 @@ function App() {
       >
         <canvas
           id="webgpu-canvas"
-          width="96"
-          height="96
+          width="512"
+          height="512
         ."
         ></canvas>
       </div>
