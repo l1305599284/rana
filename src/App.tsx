@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState,memo } from "react";
 import {
   createBox,
   createSphere,
@@ -9,7 +9,6 @@ import {
   createPointLight,
 } from "../lib";
 
-import { memo } from "react";
 
 function App() {
   const [fov, setFov] = useState("150");
@@ -31,9 +30,10 @@ function App() {
       const scene = createScene(engine);
       createPointLight("light1", { position: vec3(0, 1, 0) }, scene);
       createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
-
-      // createBox("b1", scene);
+      
       createSphere("s1", scene);
+      createBox("b1", scene);
+      
 
       await engine.loop(() => {
         scene.render();
@@ -57,7 +57,7 @@ function App() {
         ."
         ></canvas>
       </div>
-      <div className="inputs">
+      {/* <div className="inputs">
         <div>
           <span>Point Light color</span> <input id="plc" type="color" />
         </div>
@@ -154,7 +154,7 @@ function App() {
             value={f}
           />
         </div>
-      </div>
+      </div> */}
     </>
   );
 }

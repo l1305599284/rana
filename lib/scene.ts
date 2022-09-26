@@ -102,19 +102,21 @@ export class Scene {
     this.viewProjectionMatrix = this.camera.getViewProjectionMatrix();
     this.transforms = new Float32Array(this.getMeshesCount() * 16);
     this.colors = new Float32Array(this.getMeshesCount() * 4);
-
-    this.meshes.map((mesh, i) => {
+    for (let i = 0; i < this.meshes.length; i++) {
+      const mesh = this.meshes[i];
       this.transforms.set(mesh.transform.array(), i * 16);
       this.colors.set(mesh.color.array(), i * 4);
-    });
+    }
+
 
     queue.writeBuffer(this.transformBuffer, 0, this.transforms);
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
-
-    this.meshBuffers.map((buffer, i) => {
+    for (let i = 0; i < this.meshBuffers.length; i++) {
+      const buffer = this.meshBuffers[i];
       queue.writeBuffer(buffer.vertex, 0, this.meshes[i].geometry.vertex);
       queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
-    });
+    }
+
 
     queue.writeBuffer(this.lightBuffer, 0, pl);
     queue.writeBuffer(
@@ -124,6 +126,7 @@ export class Scene {
     );
   }
   render() {
+    
     // write datas to buffers
     const { queue, device, context, depthTexture } = this.engine;
 
@@ -159,23 +162,23 @@ export class Scene {
     passEncoder.setBindGroup(0, this.mvpBindingGroup);
     passEncoder.setBindGroup(1, this.lightBindingGroup);
 
-    this.meshBuffers.map((buffer, i) => {
+    for (let i = 0; i < this.meshBuffers.length; i++) {
+      const buffer = this.meshBuffers[i];
       passEncoder.setVertexBuffer(0, buffer.vertex);
-
       passEncoder.setIndexBuffer(buffer.index, "uint16");
       passEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, 0);
-    });
+    }
 
     passEncoder.end();
 
     queue.submit([commandEncoder.finish()]);
   }
 
-  createSceneUniformBuffer() {}
+  createSceneUniformBuffer() { }
   addMesh(mesh: Mesh) {
     this.meshes.push(mesh);
   }
-  removeMesh() {}
+  removeMesh() { }
 
   addLight(light: Light) {
     this.light = light;
@@ -184,18 +187,18 @@ export class Scene {
   addCamera(camera: Camera) {
     this.camera = camera;
   }
-  removeLight() {}
-  removeCamera() {}
-  addMaterial() {}
-  removeMaterial() {}
+  removeLight() { }
+  removeCamera() { }
+  addMaterial() { }
+  removeMaterial() { }
 
-  removeTexture() {}
-  addTexture() {}
+  removeTexture() { }
+  addTexture() { }
 
-  addGeometry() {}
-  removeGeometry() {}
+  addGeometry() { }
+  removeGeometry() { }
 
-  onPointer() {}
+  onPointer() { }
 }
 
 export function createScene(engine: Engine, options?: SceneOptions) {
