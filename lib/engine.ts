@@ -51,7 +51,7 @@ export class Engine {
 
     await this.init();
     await this.scene.init();
-    renderFunction();
+    realRenderFunction();
     // requestAnimationFrame(realRenderFunction);
   }
 }

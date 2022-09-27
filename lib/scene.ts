@@ -11,7 +11,7 @@ import { Engine } from "./engine";
 import { Light } from "./light";
 import { Matrix } from "./matrix";
 import { Mesh } from "./meshes/mesh";
-import { translate } from "./transform";
+import { scale, translate } from "./transform";
 type MeshBuffer = {
   vertex: GPUBuffer;
   index: GPUBuffer;
@@ -104,19 +104,21 @@ export class Scene {
     this.colors = new Float32Array(this.getMeshesCount() * 4);
     for (let i = 0; i < this.meshes.length; i++) {
       const mesh = this.meshes[i];
+      
       this.transforms.set(mesh.transform.array(), i * 16);
+      
       this.colors.set(mesh.color.array(), i * 4);
     }
 
 
     queue.writeBuffer(this.transformBuffer, 0, this.transforms);
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
+
     for (let i = 0; i < this.meshBuffers.length; i++) {
       const buffer = this.meshBuffers[i];
       queue.writeBuffer(buffer.vertex, 0, this.meshes[i].geometry.vertex);
       queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
     }
-
 
     queue.writeBuffer(this.lightBuffer, 0, pl);
     queue.writeBuffer(
@@ -168,7 +170,7 @@ export class Scene {
       passEncoder.setIndexBuffer(buffer.index, "uint16");
       passEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, 0);
     }
-
+    
     passEncoder.end();
 
     queue.submit([commandEncoder.finish()]);

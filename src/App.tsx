@@ -8,6 +8,8 @@ import {
   createPerspectiveCamera,
   createPointLight,
 } from "../lib";
+import { color3, color4 } from "../lib/color";
+import { translate } from "../lib/transform";
 
 
 function App() {
@@ -31,10 +33,11 @@ function App() {
       createPointLight("light1", { position: vec3(0, 1, 0) }, scene);
       createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
       
-      createSphere("s1", scene);
-      createBox("b1", scene);
-      
-
+   
+      const b1 = createBox("b1", scene);
+      b1.transform=translate(2,2,2)
+      const s1 = createSphere("s1", scene);
+      s1.transform = translate(-2,-2,2)
       await engine.loop(() => {
         scene.render();
       });
