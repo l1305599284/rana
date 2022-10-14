@@ -43,7 +43,7 @@ const defaulOrthographicCameraOptions = {
 const defaulPerspectiveCameraOptions = {
   ...defaulCameraOptions,
   n: 1,
-  f: 1000,
+  f: 10,
   fov: 150,
   aspectRatio: 1,
 };

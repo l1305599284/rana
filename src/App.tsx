@@ -1,16 +1,7 @@
-import React, { useEffect, useState,memo } from "react";
-import {
-  createBox,
-  createSphere,
-  vec3,
-  createEngine,
-  createScene,
-  createPerspectiveCamera,
-  createPointLight,
-} from "../lib";
-import { color3, color4 } from "../lib/color";
-import { translate } from "../lib/transform";
+import React, { useEffect, useState } from "react";
+import {createBox, createSphere,vec3,createEngine, createScene,createPerspectiveCamera,createPointLight } from "../lib";
 
+import { memo } from "react";
 
 function App() {
   const [fov, setFov] = useState("150");
@@ -30,14 +21,34 @@ function App() {
 
       const engine = createEngine(canvas);
       const scene = createScene(engine);
-      createPointLight("light1", { position: vec3(0, 1, 0) }, scene);
-      createPerspectiveCamera("c1", { target: vec3(0, 0, 1) }, scene);
-      
-   
-      const b1 = createBox("b1", scene);
-      b1.transform=translate(2,2,2)
-      const s1 = createSphere("s1", scene);
-      s1.transform = translate(-2,-2,2)
+      const light = createPointLight(
+        "light1",
+        { position: vec3(0, -1, -1),intensity:10 },
+        scene
+      );
+      const camera = createPerspectiveCamera(
+        "c1",
+        {  target: vec3(0, 0, 1),position:vec3(0,0,0) },
+        scene
+      );
+      // setInterval(()=>{
+      //   console.log(camera.target);
+        
+      //   camera.target = camera.target.add(vec3(0.1,0,0))
+      // },1000)
+      setInterval(()=>{
+
+        // light.position = light.position.add(vec3(0,0.02,0))
+        camera.target = camera.target.add(vec3(0.01,0,0))
+ 
+        // camera.position = camera.position.add(vec3(0,0,-0.05))
+      },100)
+      // camera.target = vec3(1,0,1)
+      for (let i = 0; i < 2; i++) {
+        createBox("b"+i, scene);
+      }
+
+
       await engine.loop(() => {
         scene.render();
       });
@@ -60,7 +71,7 @@ function App() {
         ."
         ></canvas>
       </div>
-      {/* <div className="inputs">
+      <div className="inputs">
         <div>
           <span>Point Light color</span> <input id="plc" type="color" />
         </div>
@@ -157,7 +168,7 @@ function App() {
             value={f}
           />
         </div>
-      </div> */}
+      </div>
     </>
   );
 }

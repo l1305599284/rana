@@ -3,10 +3,16 @@ import { Scene } from "../scene";
 import { translate } from "../transform";
 import { int } from "../types";
 import { Mesh } from "./mesh";
-type SphereOptions = {};
+type SphereOptions = {
+  width: int;
+  height: int;
+};
 
-const defaulSphereOptions = {};
+const defaulSphereOptions = {
+
+};
 class SphereMesh extends Mesh {
+
   constructor(name: string, scene: Scene, options?: SphereOptions) {
     super(name, scene);
     this.geometry = createSphereGeometry();
@@ -18,10 +24,6 @@ class SphereMesh extends Mesh {
   }
 }
 
-export function createSphere(
-  name: string,
-  scene: Scene,
-  options?: SphereOptions
-) {
+export function createSphere(name: string, scene: Scene, options?: SphereOptions) {
   return new SphereMesh(name, scene, options);
 }
