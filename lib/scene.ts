@@ -142,8 +142,6 @@ export class Scene {
     );
     // light 
 
-
-
     if(this.lights.length > 0)
       for (let i = 0; i < this.lights.length; i++) {
         const light =  this.lights[i];

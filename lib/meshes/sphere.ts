@@ -4,8 +4,7 @@ import { translate } from "../transform";
 import { int } from "../types";
 import { Mesh } from "./mesh";
 type SphereOptions = {
-  width: int;
-  height: int;
+
 };
 
 const defaulSphereOptions = {
@@ -15,12 +14,14 @@ class SphereMesh extends Mesh {
 
   constructor(name: string, scene: Scene, options?: SphereOptions) {
     super(name, scene);
-    this.geometry = createSphereGeometry();
-    for (const key in options) {
-      if (Object.prototype.hasOwnProperty.call(defaulSphereOptions, key)) {
+   
+    for (const key in defaulSphereOptions) {
+      if (Object.prototype.hasOwnProperty.call(options||{}, key)) {
         this[key] = options[key];
       } else this[key] = defaulSphereOptions[key];
     }
+
+    this.geometry = createSphereGeometry();
   }
 }
 
