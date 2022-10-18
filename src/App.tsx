@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { createBox, createSphere, vec3, createEngine, createScene, createPerspectiveCamera, createPointLight } from "../lib";
 
 import { memo } from "react";
+import { createGround } from "../lib/meshes";
+import { translate } from "../lib/transform";
 
 function App() {
-  const [fov, setFov] = useState("150");
-  const [cz, setCZ] = useState(0);
-  const [cx, setCX] = useState(0);
-  const [n, setN] = useState(1);
-  const [f, setF] = useState(99);
+  // const [fov, setFov] = useState("150");
+  // const [cz, setCZ] = useState(0);
+  // const [cx, setCX] = useState(0);
+  // const [n, setN] = useState(1);
+  // const [f, setF] = useState(99);
   useEffect(() => {
     (async () => {
       const canvas = document.getElementById(
@@ -24,31 +26,36 @@ function App() {
 
       const camera = createPerspectiveCamera(
         "c1",
-        { target: vec3(0, 0, 1), position: vec3(0, 0, -1) },
+        { target: vec3(0, 0, 1), position: vec3(0,0, -1),up:vec3(0,1,0) },
+  
+        // { target: vec3(0, 0, 0), position: vec3(0, 1, -1),up:vec3(0,1,1) },
         scene
       );
+      const g = createGround("g", scene);
 
-      for (let i = 0; i < 25; i++) {
-        // createBox("b"+i, scene);
-        createSphere("b" + i, scene);
-      }
+   
+        
+        const box =createBox("b" , scene);
+        
+      
 
-      const light = createPointLight(
-        "light1",
-        { color: vec3(0.5, 0, 0), position: vec3(-1, -1, -1), intensity: 50, radius: 5 },
-        scene
-      );
+      // const light = createPointLight(
+      //   "light1",
+      //   { color: vec3(0.5, 0, 0), position: vec3(-1, -1, -1), intensity: 50, radius: 5 },
+      //   scene
+      // );
 
       const light2 = createPointLight(
         "light2",
-        { color: vec3(1, 1, 1), position: vec3(1, 1, -1), intensity: 4, radius: 5 },
+        { color: vec3(1, 1, 1), position: vec3(1, 1, -1), intensity: 10, radius: 5 },
         scene
       );
 
       await engine.loop(() => {
-        camera.target = camera.target.add(vec3(0.1, 0, 0))
-        light.position = light.position.add(vec3(0, 0.01, 0))
-        light2.position = light2.position.add(vec3(0, -0.01, 0))
+            g.transform = translate(0,-0.01,0).mul(g.transform)
+            box.transform = translate(-0.01,0,0).mul(box.transform)
+        // light.position = light.position.add(vec3(0, 0.01, 0))
+        // light2.position = light2.position.add(vec3(0, -0.01, 0))
         scene.render();
       });
     })();
@@ -70,7 +77,7 @@ function App() {
         ."
         ></canvas>
       </div>
-      <div className="inputs">
+      {/* <div className="inputs">
         <div>
           <span>Point Light color</span> <input id="plc" type="color" />
         </div>
@@ -167,7 +174,7 @@ function App() {
             value={f}
           />
         </div>
-      </div>
+      </div> */}
     </>
   );
 }

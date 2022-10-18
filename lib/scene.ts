@@ -111,13 +111,7 @@ export class Scene {
     this.transforms = new Float32Array(this.getMeshesCount() * 16);
     this.colors = new Float32Array(this.getMeshesCount() * 4);
 
-    this.meshes.map((mesh, i) => {
-      this.transforms.set(translate(Math.random() * 5 - 2, Math.random() * 5 - 2, 2).array(), i * 16);
-      this.colors.set(mesh.color.array(), i * 4);
-    }); 
     
-    queue.writeBuffer(this.transformBuffer, 0, this.transforms);
-    queue.writeBuffer(this.colorBuffer, 0, this.colors);
 
     this.meshBuffers.map((buffer, i) => {
       queue.writeBuffer(buffer.vertex, 0,  this.meshes[i].geometry.vertex);
@@ -130,6 +124,16 @@ export class Scene {
     // write datas to buffers
     const { queue, device, context, depthTexture } = this.engine;
 
+    // transform 
+
+    this.meshes.map((mesh, i) => {
+      this.transforms.set(mesh.transform.array(), i * 16);
+      this.colors.set(mesh.color.array(), i * 4);
+    }); 
+    
+    queue.writeBuffer(this.transformBuffer, 0, this.transforms);
+    queue.writeBuffer(this.colorBuffer, 0, this.colors);
+
     //  camera
     queue.writeBuffer(
       this.projectionBuffer,
@@ -137,6 +141,7 @@ export class Scene {
       this.camera.getViewProjectionMatrix().array()
     );
     // light 
+
 
 
     if(this.lights.length > 0)

@@ -28,6 +28,7 @@ export abstract class Light {
     this.color.array()[0],this.color.array()[1],this.color.array()[2]
     , this.intensity, this.radius]);
   }
+
 }
 export class PointLight extends Light {
   constructor(public name: string, options: LightOptions, scene: Scene) {
