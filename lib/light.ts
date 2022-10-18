@@ -24,7 +24,9 @@ export abstract class Light {
     scene.addLight(this);
   }
   array(){
-    return new Float32Array([this.position.array()[0],this.position.array()[1],this.position.array()[2], this.intensity, this.radius]);
+    return new Float32Array([this.position.array()[0],this.position.array()[1],this.position.array()[2],
+    this.color.array()[0],this.color.array()[1],this.color.array()[2]
+    , this.intensity, this.radius]);
   }
 }
 export class PointLight extends Light {
@@ -35,9 +37,6 @@ export class PointLight extends Light {
         this[key] = options[key];
       } else this[key] = defaulLightOptions[key];
     }
-
-  
-    
   }
 }
 

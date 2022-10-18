@@ -20,7 +20,7 @@ type SceneOptions = {};
 
 export class Scene {
   camera?: Camera;
-  light?: Light;
+  lights?: Light[] = [];
   meshes?: Mesh[]=[];
   pipeline: GPURenderPipeline;
   mvpBindingGroup: GPUBindGroup;
@@ -58,7 +58,7 @@ export class Scene {
         device
       ),
     }));
-    console.log(this.meshBuffers);
+
     
     
     
@@ -81,7 +81,7 @@ export class Scene {
       device
     );
 
-    this.lightBuffer = createStorageBuffer("lightBuffer", 5 * 4, device);
+    
 
     const { pipeline } = await initPipline(device, format, {
       depthFormat,
@@ -96,12 +96,16 @@ export class Scene {
       device
     );
 
+    this.lightBuffer = createStorageBuffer("lightBuffer", this.lights.length * 8 * 4, device);
+
     this.lightBindingGroup = createBindingGroup(
       "lightGroup Group with matrix",
       [this.lightBuffer],
       pipeline.getBindGroupLayout(1),
       device
     );
+      
+    
 
 
     this.transforms = new Float32Array(this.getMeshesCount() * 16);
@@ -114,12 +118,10 @@ export class Scene {
     
     queue.writeBuffer(this.transformBuffer, 0, this.transforms);
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
-    this.meshBuffers.map((buffer, i) => {
 
-        queue.writeBuffer(buffer.vertex, 0,  this.meshes[i].geometry.vertex);
+    this.meshBuffers.map((buffer, i) => {
+      queue.writeBuffer(buffer.vertex, 0,  this.meshes[i].geometry.vertex);
       queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
- 
-      
     });
 
    
@@ -135,7 +137,14 @@ export class Scene {
       this.camera.getViewProjectionMatrix().array()
     );
     // light 
-    queue.writeBuffer(this.lightBuffer, 0, this.light.array());
+
+
+    if(this.lights.length > 0)
+      for (let i = 0; i < this.lights.length; i++) {
+        const light =  this.lights[i];
+        queue.writeBuffer(this.lightBuffer, i*8*4, light.array());
+      }
+    
 
     const commandEncoder = device.createCommandEncoder();
 
@@ -167,6 +176,7 @@ export class Scene {
  
     // setBindGroups
     passEncoder.setBindGroup(0, this.mvpBindingGroup);
+    
     passEncoder.setBindGroup(1, this.lightBindingGroup);
 
     this.meshBuffers.map((buffer, i) => {
@@ -189,7 +199,7 @@ export class Scene {
   removeMesh() {}
 
   addLight(light: Light) {
-    this.light = light;
+    this.lights.push(light);
   }
 
   addCamera(camera: Camera) {

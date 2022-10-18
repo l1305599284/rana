@@ -122,3 +122,10 @@ export function createPerspectiveCamera(
 ) {
   return new PerspectiveCamera(name, options, scene);
 }
+export function createOrthographicCamera(
+  name: string,
+  options: OrthographicCameraOptions,
+  scene: Scene
+) {
+  return new OrthographicCamera(name, options, scene);
+}

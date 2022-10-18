@@ -1,5 +1,4 @@
-
-@group(1) @binding(0) var<storage> pl : array<f32>;
+@group(1) @binding(0) var<storage> pointLight : array<f32>;
 
 @fragment
 fn main(
@@ -8,25 +7,37 @@ fn main(
     @location(2) fragUV: vec2<f32>,
     @location(3) fragColor: vec4<f32>
 ) -> @location(0) vec4<f32> {
+
     let objectColor = fragColor.rgb;
-    let pointLightColor = vec3(1.0,1.0,1.0);
+    
+    // ambient
     let ambientColor = vec3(1.0, 1.0, 1.0);
     let ambientIntensity = 0.5;
-    var lightResult = vec3(0.0, 0.0, 0.0);
-    // // ambient
-    lightResult += ambientColor * ambientIntensity;
-    
-    // // Point Light
-       var pointPosition = vec3(pl[0],pl[1],pl[2]);
-    var pointIntensity = pl[3];
-    var pointRadius = pl[4];
-    var L = pointPosition - fragPosition;
-    var distance = length(L);
-    if(distance < pointRadius){
-        var diffuse = max(dot(normalize(L), fragNormal), 0.0);
-        var distanceFactor = pow(1.0 - distance / pointRadius, 2.0);
-        lightResult += pointLightColor * pointIntensity * diffuse * distanceFactor;
-    }
+    let lightNumber = arrayLength(&pointLight);
 
+    var lightResult = ambientColor * ambientIntensity;
+
+    if(lightNumber > 0){
+      // Loop Point Light
+      for(var i:u32 = 0; i < lightNumber; i += 8) {
+           
+            var pointLightPosition = vec3(pointLight[i],pointLight[i+1],pointLight[i+2]);
+            var pointLightColor = vec3(pointLight[i+3],pointLight[i+4],pointLight[i+5]);
+            var pointLightIntensity = pointLight[i+6];
+            var pointLightRadius = pointLight[i+7];
+            
+            var L = pointLightPosition - fragPosition;
+            var distance = length(L);
+
+            if(distance < pointLightRadius) {
+
+                var diffuse = max(dot(normalize(L), fragNormal), 0.0);
+                var distanceFactor = pow(1.0 - distance / pointLightRadius, 2.0);
+                lightResult += pointLightColor * pointLightIntensity * diffuse * distanceFactor;
+
+            }
+     }
+   }
+   
     return vec4<f32>(objectColor * lightResult, 1.0);
 }

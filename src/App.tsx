@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {createBox, createSphere,vec3,createEngine, createScene,createPerspectiveCamera,createPointLight } from "../lib";
+import { createBox, createSphere, vec3, createEngine, createScene, createPerspectiveCamera, createPointLight } from "../lib";
 
 import { memo } from "react";
 
@@ -21,35 +21,34 @@ function App() {
 
       const engine = createEngine(canvas);
       const scene = createScene(engine);
-      const light = createPointLight(
-        "light1",
-        { position: vec3(0, -1, -1),intensity:10 },
-        scene
-      );
+
       const camera = createPerspectiveCamera(
         "c1",
-        {  target: vec3(0, 0, 1),position:vec3(0,0,0) },
+        { target: vec3(0, 0, 1), position: vec3(0, 0, -1) },
         scene
       );
-      // setInterval(()=>{
-      //   console.log(camera.target);
-        
-      //   camera.target = camera.target.add(vec3(0.1,0,0))
-      // },1000)
-      setInterval(()=>{
 
-        // light.position = light.position.add(vec3(0,0.02,0))
-        camera.target = camera.target.add(vec3(0.01,0,0))
- 
-        // camera.position = camera.position.add(vec3(0,0,-0.05))
-      },100)
-      // camera.target = vec3(1,0,1)
-      for (let i = 0; i < 2; i++) {
-        createBox("b"+i, scene);
+      for (let i = 0; i < 25; i++) {
+        // createBox("b"+i, scene);
+        createSphere("b" + i, scene);
       }
 
+      const light = createPointLight(
+        "light1",
+        { color: vec3(0.5, 0, 0), position: vec3(-1, -1, -1), intensity: 50, radius: 5 },
+        scene
+      );
+
+      const light2 = createPointLight(
+        "light2",
+        { color: vec3(1, 1, 1), position: vec3(1, 1, -1), intensity: 4, radius: 5 },
+        scene
+      );
 
       await engine.loop(() => {
+        camera.target = camera.target.add(vec3(0.1, 0, 0))
+        light.position = light.position.add(vec3(0, 0.01, 0))
+        light2.position = light2.position.add(vec3(0, -0.01, 0))
         scene.render();
       });
     })();
