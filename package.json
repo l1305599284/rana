@@ -1,7 +1,7 @@
 {
   "name": "rana",
   "description": "The Next Generation WebGPU Engine",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "files": [
     "dist"
   ],
@@ -10,6 +10,17 @@
     "render",
     "3d"
   ],
+  "author": {
+    "name": "xuyanming"
+  },
+  "homepage": "https://github.com/fogcity/rana#readme",
+  "bugs": {
+    "url": "https://github.com/fogcity/rana/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fogcity/rana.git"
+  },
   "main": "./dist/index.umd.js",
   "module": "./dist/index.es.js",
   "types": "./dist/index.d.ts",
