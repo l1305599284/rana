@@ -1,6 +1,6 @@
 <!-- markdownlint-disable-next-line -->
 <p align="center">
-  <img src="./images/logo.jpg" alt="rana: The Next Generation WebGPU Engine">
+  <img src="./images/logo.png" alt="rana: The Next Generation WebGPU Engine">
   
 </p>
 <h1 align="center">Rana</h1>
