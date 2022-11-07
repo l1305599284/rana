@@ -30,6 +30,7 @@ function App() {
 
         // 俯视图
         // { target: vec3(0, 0, 1), position: vec3(0, 1, 1),up:vec3(0,0,1) },
+        
         scene
       );
       const g = createGround("g", scene, {

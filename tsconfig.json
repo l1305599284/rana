@@ -1,7 +1,6 @@
 {
   "compilerOptions": {
     "target": "ESNext",
-
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "types": ["vite/client", "@webgpu/types"],
     "declaration": true,

@@ -1,6 +1,7 @@
 {
   "name": "rana",
-  "version": "0.0.1",
+  "description": "The Next Generation WebGPU Engine",
+  "version": "0.0.3",
   "files": [
     "dist"
   ],
