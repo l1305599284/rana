@@ -25,57 +25,36 @@ function App() {
       const scene = createScene(engine);
 
       const camera = createPerspectiveCamera(
-        "c1",
+        "camera",
         { target: vec3(0, 0, 1), position: vec3(0, 0, -1), up: vec3(0, 1, 0) },
-
-        // 俯视图
-        // { target: vec3(0, 0, 1), position: vec3(0, 1, 1),up:vec3(0,0,1) },
-        
         scene
       );
-      const g = createGround("g", scene, {
+      const g = createGround("ground1", scene, {
         width: 5, height: 5
       });
+      console.log(g);
+      
       g.transform = translate(0, -2, 0).mul(g.transform)
 
 
-      const box = createBox("b", scene, {
+      const box = createBox("box", scene, {
         width: 2, height: 2, depth: 2
       });
 
       box.transform = translate(-4, 1, 2).mul(box.transform)
-      const box3 = createBox("b2", scene, { width: 12, height: 10, depth: 1 });
-      box3.transform = translate(1, 0, 5).mul(box3.transform)
-      const box4 = createBox("b2", scene, { width: 4, height: 4, depth: 1 });
-      box4.transform = translate(4, 0, 1.5).mul(box4.transform)
 
-
-      // two point light
       const light = createPointLight(
-        "light1",
+        "light",
         { color: vec3(0, 0.4, 0), position: vec3(-1, -1, -1), intensity: 10, radius: 10 },
         scene
       );
 
-      const light2 = createPointLight(
-        "light2",
-        { color: vec3(1, 1, 1), position: vec3(1, 1, -1), intensity: 5, radius: 5 },
-        scene
-      );
 
       await engine.loop(() => {
-
-        // f 
-        if (camera.f != 0) {
-          camera.f -= 5
-
-        }
-        console.log("camera.f", camera.f);
-
         box.transform = translate(-0.02, 0, 0).mul(box.transform)
-
         scene.render();
       });
+
     })();
   }, []);
   return (
