@@ -5,37 +5,55 @@ import {
   createUniformBuffer,
   createVertexBuffer,
 } from "./buffer";
-import { Camera } from "./camera";
-import { initPipline } from "./core";
+import { Camera, createPerspectiveCamera } from "./camera";
+import { createPipline } from "./core";
 import { Engine } from "./engine";
 import { Light } from "./light";
 import { Matrix } from "./matrix";
 import { Mesh } from "./meshes/mesh";
 import { translate } from "./transform";
+import vertShaderCode from "./shaders/vert.wgsl?raw";
+import fragShaderCode from "./shaders/frag.wgsl?raw";
+import shadowShaderCode from "./shaders/shadow.wgsl?raw";
+import { vec3 } from "./vector";
 type MeshBuffer = {
   vertex: GPUBuffer;
   index: GPUBuffer;
 };
-type SceneOptions = {};
+type SceneOptions = {
+  shadow: boolean
+};
+const defaultSceneOptions = {
+  shadow: true
+};
 
 export class Scene {
   camera?: Camera;
   lights?: Light[] = [];
   meshes?: Mesh[] = [];
-  pipeline: GPURenderPipeline;
-  mvpBindingGroup: GPUBindGroup;
-  lightBindingGroup: GPUBindGroup;
+  renderPipeline: GPURenderPipeline;
+  shadowPipeline: GPURenderPipeline;
+  vertexShaderBindingGroup: GPUBindGroup;
+  fragmentShaderBindingGroup: GPUBindGroup;
+  shadowBindingGroup?: GPUBindGroup;
   transforms: Float32Array;
   colors: Float32Array;
   lightBuffer: GPUBuffer;
   meshBuffers: MeshBuffer[];
-  transformBuffer: GPUBuffer;
-  projectionBuffer: GPUBuffer;
+  modelViewBuffer: GPUBuffer;
+  cameraProjectionBuffer: GPUBuffer;
+  lightProjectionBuffer: GPUBuffer;
   colorBuffer: GPUBuffer;
+  shadow: boolean
   viewProjectionMatrix: Matrix;
   constructor(public engine: Engine, options?: SceneOptions) {
     engine.addScene(this);
     if (options) {
+      for (const key in defaultSceneOptions) {
+        if (Object.prototype.hasOwnProperty.call(options, key)) {
+          this[key] = options[key];
+        } else this[key] = defaultSceneOptions[key];
+      }
     }
   }
 
@@ -44,7 +62,9 @@ export class Scene {
   }
 
   async init() {
-    const { context, queue, device, format, depthFormat } = this.engine;
+    const { shadowDepthView, queue, primitive, depthStencil, device, format } = this.engine;
+
+
 
     this.meshBuffers = this.meshes.map((v) => ({
       vertex: createVertexBuffer(
@@ -62,15 +82,15 @@ export class Scene {
 
 
 
-    this.transformBuffer = createStorageBuffer(
+    this.modelViewBuffer = createStorageBuffer(
       "modelBuffer",
       16 * 4 * this.getMeshesCount(),
       device
     );
 
-    this.projectionBuffer = createUniformBuffer(
-      "projectionBuffer",
-      16 * 4,
+    this.cameraProjectionBuffer = createUniformBuffer(
+      "cameraProjectionBuffer",
+      4 * 4 * 4,
       device
     );
 
@@ -81,33 +101,7 @@ export class Scene {
       device
     );
 
-
-
-    const { pipeline } = await initPipline(device, format, {
-      depthFormat,
-    });
-
-    this.pipeline = pipeline;
-
-    this.mvpBindingGroup = createBindingGroup(
-      "mvpBindingGroup",
-      [this.transformBuffer, this.projectionBuffer, this.colorBuffer],
-      pipeline.getBindGroupLayout(0),
-      device
-    );
-
     this.lightBuffer = createStorageBuffer("lightBuffer", this.lights.length * 8 * 4, device);
-
-    this.lightBindingGroup = createBindingGroup(
-      "lightGroup Group with matrix",
-      [this.lightBuffer],
-      pipeline.getBindGroupLayout(1),
-      device
-    );
-
-
-
-
     this.transforms = new Float32Array(this.getMeshesCount() * 16);
     this.colors = new Float32Array(this.getMeshesCount() * 4);
 
@@ -118,25 +112,75 @@ export class Scene {
       queue.writeBuffer(buffer.index, 0, this.meshes[i].geometry.index);
     });
 
+    if (this.shadow) {
+      this.lightProjectionBuffer = createUniformBuffer(
+        "lightProjectionBuffer",
+        4 * 4 * 4,
+        device
+      );
+      const { pipeline: shadowPipeline } = await createPipline('shadow pipline', device, {
+        vertShaderCode: shadowShaderCode,
+        primitive, depthStencil
+      });
+      this.shadowBindingGroup = createBindingGroup(
+        "shadows",
+        [this.modelViewBuffer, this.lightProjectionBuffer],
+        shadowPipeline.getBindGroupLayout(0),
+        device
+      );
 
+      this.shadowPipeline = shadowPipeline;
+    }
+
+
+    const { pipeline: renderPipeline } = await createPipline('render pipeline', device, {
+      format,
+      vertShaderCode: vertShaderCode,
+      fragShaderCode: fragShaderCode,
+      primitive, depthStencil
+    });
+
+    this.renderPipeline = renderPipeline;
+
+    this.vertexShaderBindingGroup = createBindingGroup(
+      "vertexShaderBindingGroup",
+      [this.modelViewBuffer, this.cameraProjectionBuffer, this.lightProjectionBuffer, this.colorBuffer],
+      renderPipeline.getBindGroupLayout(0),
+      device
+    );
+
+
+
+    this.fragmentShaderBindingGroup = createBindingGroup(
+      "lightGroup Group with matrix",
+      [this.lightBuffer, shadowDepthView, device.createSampler({
+        compare: 'less',
+      })],
+      renderPipeline.getBindGroupLayout(1),
+      device
+    );
   }
   render() {
     // write datas to buffers
-    const { queue, device, context, depthTexture } = this.engine;
+    const { queue, device, context, renderDepthView, shadowDepthView } = this.engine;
 
     // transform 
-
+    const cameraLight = createPerspectiveCamera(
+      "camera",
+      { target: vec3(0, 0, 1), position: vec3(0, 0, -1), up: vec3(0, 1, 0) },
+      this
+    );
     this.meshes.map((mesh, i) => {
       this.transforms.set(mesh.transform.array(), i * 16);
       this.colors.set(mesh.color.array(), i * 4);
     });
 
-    queue.writeBuffer(this.transformBuffer, 0, this.transforms);
+    queue.writeBuffer(this.modelViewBuffer, 0, this.transforms);
     queue.writeBuffer(this.colorBuffer, 0, this.colors);
 
     //  camera
     queue.writeBuffer(
-      this.projectionBuffer,
+      this.cameraProjectionBuffer,
       0,
       this.camera.getViewProjectionMatrix().array()
     );
@@ -146,20 +190,50 @@ export class Scene {
       for (let i = 0; i < this.lights.length; i++) {
         const light = this.lights[i];
         queue.writeBuffer(this.lightBuffer, i * 8 * 4, light.array());
+        cameraLight.position = light.position
+        queue.writeBuffer(this.lightProjectionBuffer, 0, cameraLight.getViewProjectionMatrix().array())
       }
 
 
     const commandEncoder = device.createCommandEncoder();
 
-    const colorAttachment: GPURenderPassColorAttachment = {
+
+
+    if (this.shadow) {
+      const shadowPassDescriptor: GPURenderPassDescriptor = {
+        colorAttachments: [],
+        depthStencilAttachment: {
+          view: shadowDepthView,
+          depthClearValue: 1.0,
+          depthLoadOp: 'clear',
+          depthStoreOp: 'store',
+        }
+      }
+      const shadowPassEncoder = commandEncoder.beginRenderPass(shadowPassDescriptor)
+      shadowPassEncoder.setPipeline(this.shadowPipeline);
+      // setBindGroups
+      shadowPassEncoder.setBindGroup(0, this.shadowBindingGroup);
+
+      this.meshBuffers.map((buffer, i) => {
+
+        shadowPassEncoder.setVertexBuffer(0, buffer.vertex);
+        shadowPassEncoder.setIndexBuffer(buffer.index, "uint16");
+        shadowPassEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, i);
+      });
+
+      shadowPassEncoder.end();
+    }
+
+
+    const renderPassColorAttachment: GPURenderPassColorAttachment = {
       view: context.getCurrentTexture().createView(),
       clearValue: { r: 0, g: 0, b: 0, a: 1 },
       loadOp: "clear",
       storeOp: "store",
     };
 
-    const depthAttachment: GPURenderPassDepthStencilAttachment = {
-      view: depthTexture.createView(),
+    const renderPassDepthAttachment: GPURenderPassDepthStencilAttachment = {
+      view: renderDepthView,
       depthClearValue: 1,
       depthLoadOp: "clear",
       depthStoreOp: "store",
@@ -169,27 +243,27 @@ export class Scene {
     };
 
     const renderPassDesc: GPURenderPassDescriptor = {
-      colorAttachments: [colorAttachment],
-      depthStencilAttachment: depthAttachment,
+      colorAttachments: [renderPassColorAttachment],
+      depthStencilAttachment: renderPassDepthAttachment,
     };
 
-    const passEncoder = commandEncoder.beginRenderPass(renderPassDesc);
+    const renderpassEncoder = commandEncoder.beginRenderPass(renderPassDesc);
 
-    passEncoder.setPipeline(this.pipeline);
+    renderpassEncoder.setPipeline(this.renderPipeline);
 
     // setBindGroups
-    passEncoder.setBindGroup(0, this.mvpBindingGroup);
+    renderpassEncoder.setBindGroup(0, this.vertexShaderBindingGroup);
 
-    passEncoder.setBindGroup(1, this.lightBindingGroup);
+    renderpassEncoder.setBindGroup(1, this.fragmentShaderBindingGroup);
 
     this.meshBuffers.map((buffer, i) => {
 
-      passEncoder.setVertexBuffer(0, buffer.vertex);
-      passEncoder.setIndexBuffer(buffer.index, "uint16");
-      passEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, i);
+      renderpassEncoder.setVertexBuffer(0, buffer.vertex);
+      renderpassEncoder.setIndexBuffer(buffer.index, "uint16");
+      renderpassEncoder.drawIndexed(this.meshes[i].geometry.indexCount, 1, 0, 0, i);
     });
 
-    passEncoder.end();
+    renderpassEncoder.end();
 
     queue.submit([commandEncoder.finish()]);
   }
@@ -216,13 +290,13 @@ export class Scene {
 
   addTexture() { }
   removeTexture() { }
-  
+
   createSceneUniformBuffer() { }
-  onLoad(){
+  onLoad() {
 
   }
-  onClick(){
-    
+  onClick() {
+
   }
   onPointer() { }
 }

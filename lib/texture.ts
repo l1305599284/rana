@@ -1,4 +1,4 @@
-function texture(
+function createTexture(
   size: GPUExtent3DStrict,
   format: GPUTextureFormat,
   sampleCount: number,
@@ -19,7 +19,7 @@ export function attachmentTexture(
   device: GPUDevice,
   sampleCount: number = 4
 ) {
-  return texture(
+  return createTexture(
     size,
     format,
     sampleCount,
@@ -41,7 +41,7 @@ export function linearSamplar(device: GPUDevice) {
   });
 }
 export function bitmapTexture(bitmap: ImageBitmap, device: GPUDevice) {
-  return texture(
+  return createTexture(
     [bitmap.width, bitmap.height],
     "rgba8unorm",
     1,

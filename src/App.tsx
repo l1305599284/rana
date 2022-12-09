@@ -32,7 +32,7 @@ function App() {
       const g = createGround("ground1", scene, {
         width: 5, height: 5
       });
-      console.log(g);
+     
       
       g.transform = translate(0, -2, 0).mul(g.transform)
 
@@ -45,13 +45,13 @@ function App() {
 
       const light = createPointLight(
         "light",
-        { color: vec3(0, 0.4, 0), position: vec3(-1, -1, -1), intensity: 10, radius: 10 },
+        { color: vec3(1, 1, 0), position: vec3(-1, 2, -1), intensity: 5, radius: 15 },
         scene
       );
 
 
       await engine.loop(() => {
-        box.transform = translate(-0.02, 0, 0).mul(box.transform)
+    
         scene.render();
       });
 

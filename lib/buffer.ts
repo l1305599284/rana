@@ -102,7 +102,7 @@ export const createVertexBuffer = (
 
 export const createBindingGroup = (
   label: string,
-  buffers: GPUBuffer[],
+  buffers: (GPUBuffer|GPUTextureView|GPUSampler)[],
   layout: GPUBindGroupLayout,
   device: GPUDevice
 ) => {
@@ -114,6 +114,6 @@ export const createBindingGroup = (
       resource: {
         buffer: v,
       },
-    })),
+    })) as Iterable<GPUBindGroupEntry>,
   });
 };

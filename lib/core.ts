@@ -63,18 +63,23 @@ export const initDepthStencil = async (
   return { depthFormat, depthTexture };
 };
 
-export const initPipline = async (
+export const createPipline = async (
+  label:string,
   device: GPUDevice,
-  format: GPUTextureFormat,
-  depthOp?: {
+  options: {
+    format?: GPUTextureFormat,
+    vertShaderCode:string
+    fragShaderCode?:string
     layout?: GPUPipelineLayout;
-    depthFormat?: GPUTextureFormat;
+    primitive:GPUPrimitiveState;
+    depthStencil: GPUDepthStencilState;
   }
 ) => {
-  const vsm = await createShaderModule(vertShaderCode, device);
-  const fsm = await createShaderModule(fragShaderCode, device);
+  const vsm = vertShaderCode && await createShaderModule(vertShaderCode, device);
+  const fsm = fragShaderCode && await createShaderModule(fragShaderCode, device);
   // Vertex attribute state and shader stage
-  const vertexState = {
+
+  const vertexState =vsm && {
     module: vsm,
     entryPoint: "main",
     buffers: [
@@ -104,12 +109,12 @@ export const initPipline = async (
     ],
   };
 
-  const fragmentState = {
+  const fragmentState = fsm && {
     module: fsm,
     entryPoint: "main",
     targets: [
       {
-        format: format,
+        format: options?.format,
       },
     ],
   };
@@ -117,20 +122,12 @@ export const initPipline = async (
   const pipeline = await device.createRenderPipelineAsync(<
     GPURenderPipelineDescriptor
   >{
-    label: "Basic Pipline",
-    layout: depthOp.layout || "auto",
+    label,
+    layout: options.layout || "auto",
     vertex: vertexState,
     fragment: fragmentState,
-    depthStencil: depthOp && {
-      format: depthOp.depthFormat,
-      depthWriteEnabled: true,
-      depthCompare: "less",
-    },
-    primitive: {
-      topology: "triangle-list",
-      frontFace: "cw",
-      cullMode: "back",
-    },
+    primitive:options.primitive,
+    depthStencil:options.depthStencil
   });
 
   return { pipeline };
